@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Browse our amazing collection of products. Find best sellers, special offers, and discover your perfect match.">
+    <title>Fasa Products - Your Product Catalog</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <div id="header"></div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">Discover Amazing Products</h1>
+                <p class="hero-subtitle">Explore our curated collection of premium products</p>
+                <a href="#products" class="btn btn-primary">Shop Now</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Best Sellers Section -->
+    <section class="section best-sellers" id="best-sellers">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Best Sellers</h2>
+                <p class="section-subtitle">Our most popular products</p>
+            </div>
+            <div class="products-grid" id="bestSellersGrid">
+                <!-- Products will be dynamically loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Special Offers Section -->
+    <section class="section offers" id="offers">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Special Offers</h2>
+                <p class="section-subtitle">Limited time deals you don't want to miss</p>
+            </div>
+            <div class="products-grid" id="offersGrid">
+                <!-- Products will be dynamically loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- All Products Section -->
+    <section class="section products" id="products">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">All Products</h2>
+                <p class="section-subtitle">Browse our complete collection</p>
+            </div>
+            <div class="filter-bar">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="category1">Food Mixes</button>
+                <button class="filter-btn" data-filter="category2">Beauty Products</button>
+                <button class="filter-btn" data-filter="category3">Health Mixes</button>
+            </div>
+            <div class="products-grid" id="productsGrid">
+                <!-- Products will be dynamically loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Fasa Products</h3>
+                    <p>Your trusted source for quality products. Browse our catalog and find exactly what you need.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="#products">Products</a></li>
+                        <li><a href="#best-sellers">Best Sellers</a></li>
+                        <li><a href="#offers">Offers</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <ul>
+                        <li>Email: info@fasaproducts.com</li>
+                        <li>Phone: +1 (555) 123-4567</li>
+                        <li>Address: 123 Product Street, City, State 12345</li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Follow Us</h4>
+                    <div class="social-links">
+                        <a href="#" aria-label="Facebook">Facebook</a>
+                        <a href="#" aria-label="Twitter">Twitter</a>
+                        <a href="#" aria-label="Instagram">Instagram</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Fasa Products. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    <script src="jquery.js"></script>
+    <script src="include.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+
