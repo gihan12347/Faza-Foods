@@ -1,3 +1,4 @@
+import { getReviews } from "./review.js";
 // ============================================
 // Product Data
 // ============================================
@@ -422,7 +423,7 @@ function loadProductDetails() {
     
     if (!productId) {
         document.getElementById('productDetailsContent').innerHTML = 
-            '<p>Product not found. <a href="index.html">Return to home</a></p>';
+            '<p>Product not found. <a href="/">Return to home</a></p>';
         return;
     }
     
@@ -430,7 +431,7 @@ function loadProductDetails() {
     
     if (!product) {
         document.getElementById('productDetailsContent').innerHTML = 
-            '<p>Product not found. <a href="index.html">Return to home</a></p>';
+            '<p>Product not found. <a href="/">Return to home</a></p>';
         return;
     }
     
@@ -444,7 +445,7 @@ function loadProductDetails() {
     renderProductDetails(product);
     
     // Render reviews
-    renderReviews(product.reviews);
+    renderReviews(productId);
     
     // Render related products
     const relatedProducts = products
@@ -517,15 +518,18 @@ function renderProductDetails(product) {
     });
 }
 
-function renderReviews(reviews) {
-    const container = document.getElementById('reviewsContainer');
+async function renderReviews(productId) {
+    const reviews = await getReviews(productId);
+    console.log("Reviews array:", reviews);
+
+    const container = document.getElementById("reviewsContainer");
     if (!container) return;
-    
+
     if (reviews.length === 0) {
-        container.innerHTML = '<p>No reviews yet. Be the first to review this product!</p>';
+        container.innerHTML = "<p>No reviews yet. Be the first to review this product!</p>";
         return;
     }
-    
+
     container.innerHTML = reviews.map(review => `
         <div class="review-card">
             <div class="review-header">
@@ -542,6 +546,7 @@ function renderReviews(reviews) {
         </div>
     `).join('');
 }
+
 
 // ============================================
 // Mobile Menu Toggle
@@ -649,10 +654,13 @@ function addToCart(product) {
 }
 
 function updateCartBadge() {
-    console.log('Updating cart badge');
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
     const totalQty = cart.reduce((sum, item) => sum + item.quantity, 0);
-    $('#cartSi').text(totalQty);
+    $('.cart-count').text(totalQty);
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
 }
 
 window.headerReady.then(() => {
@@ -689,16 +697,16 @@ function renderCart() {
                 <p class="product-name">${item.name}</p>
                 <div class="product-details">
                     <div class="quantity-controls">
-                        <button class="quantity-btn" onclick="updateQuantity(${item.id}, -1)">−</button>
+                        <button class="quantity-btn" data-id="${item.id}" data-change="-1">−</button>
                         <span class="quantity-display">${item.quantity}</span>
-                        <button class="quantity-btn" onclick="updateQuantity(${item.id}, 1)">+</button>
+                        <button class="quantity-btn" data-id="${item.id}" data-change="1">+</button>
                     </div>
                     <span class="detail-badge price">Rs. ${(item.price * item.quantity).toLocaleString()}</span>
                     <span class="detail-badge">Rs. ${item.price.toLocaleString()} each</span>
                 </div>
             </div>
             <div class="cart-actions">
-                <button class="remove-btn" onclick="removeItem(${item.id})">Remove</button>
+                <button class="remove-btn" data-id="${item.id}">Remove</button>
             </div>
         </div>
     `).join('');
@@ -719,6 +727,7 @@ function updateSummary(cart) {
 }
 
 function updateQuantity(id, change) {
+    console.log('Updating quantity for item id ' + id + ' by ' + change);
     let cart = JSON.parse(localStorage.getItem('cart')) || [];
     const item = cart.find(i => i.id === id);
     
@@ -768,5 +777,20 @@ $(document).ready(function() {
     $(document).on('click', '#cartOverlay', function() {
         $('#cartSidepanel').removeClass('active');
         $('#cartOverlay').removeClass('active');
+    });
+
+    $(document).on('click', '.quantity-btn', function() {
+        const id = Number($(this).data('id'));
+        const change = Number($(this).data('change'));
+        updateQuantity(id, change);
+    });
+
+    $(document).on('click', '.remove-btn', function() {
+        const id = Number($(this).data('id'));
+        removeItem(id);
+    });
+
+    $(document).on('click', '#checkoutBtn', function() {
+        checkout();
     });
 });

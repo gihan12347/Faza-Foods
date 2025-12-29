@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,8 +9,10 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
 </head>
+
 <body>
     <!-- Header -->
     <div id="header"></div>
@@ -46,6 +49,51 @@
             <div class="products-grid" id="relatedProductsGrid">
                 <!-- Related products will be dynamically loaded here -->
             </div>
+        </div>
+    </section>
+
+    <section class="section review-form-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Submit Your Review</h2>
+                <p class="section-subtitle">We value your feedback</p>
+            </div>
+            <div class="success-message" id="successMessage">
+                ✓ Thank you! Your review has been submitted successfully.
+            </div>
+            <div class="success-message" id="failMessage">
+                ✗ Your review submission failed. Please try again.
+            </div>
+            <form id="reviewForm" onsubmit="event.preventDefault(); submitReview();">
+                <div class="form-group">
+                    <label for="name">Your Name *</label>
+                    <input type="text" id="name" name="name" placeholder="Enter your name" required>
+                </div>
+
+                <div class="rating-group">
+                    <label>Rating *</label>
+                    <div class="star-rating" id="starRating">
+                        <span class="star" data-rating="1">★</span>
+                        <span class="star" data-rating="2">★</span>
+                        <span class="star" data-rating="3">★</span>
+                        <span class="star" data-rating="4">★</span>
+                        <span class="star" data-rating="5">★</span>
+                    </div>
+                    <div class="rating-text" id="ratingText">Select your rating</div>
+                    <input type="hidden" id="rating" name="rating" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="comment">Your Review *</label>
+                    <textarea id="comment" name="comment" placeholder="Share your experience with us..." required
+                        maxlength="500"></textarea>
+                    <div class="char-count">
+                        <span id="charCount">0</span> / 500 characters
+                    </div>
+                </div>
+
+                <button type="submit">Submit Review</button>
+            </form>
         </div>
     </section>
 
@@ -90,8 +138,9 @@
     </footer>
 
     <script src="jquery.js"></script>
+    <script type="module" src="review.js"></script>
     <script src="include.js"></script>
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
-</html>
 
+</html>
