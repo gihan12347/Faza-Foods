@@ -1,26 +1,15 @@
 {
   "products": [
     {
-      "id": 1,
-      "name": "Premium Curry Powder Mix",
-      "category": "category1",
-      "description": "Authentic blend of aromatic spices perfect for curries. Rich in flavor with a perfect balance of heat and aroma.",
       "price": 3900,
+      "name": "Premium Curry Powder Mix",
+      "isBestSeller": true,
+      "isOffer": false,
       "originalPrice": 5100,
-      "image": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=400&h=400",
       "images": [
         "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=800&h=800",
         "https://images.unsplash.com/photo-1609501676725-7186f3a1f2f1?auto=format&fit=crop&w=800&h=800",
         "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=800&h=800"
-      ],
-      "isBestSeller": true,
-      "isOffer": false,
-      "rating": 4.5,
-      "features": [
-        "100% natural spices",
-        "No preservatives added",
-        "Rich aromatic flavor",
-        "Perfect for all curry dishes"
       ],
       "reviews": [
         {
@@ -41,29 +30,29 @@
           "date": "2024-01-05",
           "text": "Best curry powder I've tried! Fresh, aromatic, and makes cooking so much easier."
         }
-      ]
+      ],
+      "id": 1,
+      "image": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=400&h=400",
+      "description": "Authentic blend of aromatic spices perfect for curries. Rich in flavor with a perfect balance of heat and aroma.",
+      "features": [
+        "100% natural spices",
+        "No preservatives added",
+        "Rich aromatic flavor",
+        "Perfect for all curry dishes"
+      ],
+      "rating": 4.5,
+      "category": "category1"
     },
     {
-      "id": 2,
-      "name": "Luxury Face Serum",
-      "category": "category2",
-      "description": "Premium anti-aging face serum with natural ingredients. Hydrates and rejuvenates your skin for a youthful glow.",
       "price": 10500,
+      "name": "Luxury Face Serum Testing",
+      "isBestSeller": true,
+      "isOffer": false,
       "originalPrice": null,
-      "image": "https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?auto=format&fit=crop&w=400&h=400",
       "images": [
         "https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?auto=format&fit=crop&w=800&h=800",
         "https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&w=800&h=800",
         "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&h=800"
-      ],
-      "isBestSeller": true,
-      "isOffer": false,
-      "rating": 4.8,
-      "features": [
-        "Anti-aging formula",
-        "Natural ingredients",
-        "Deep hydration",
-        "Suitable for all skin types"
       ],
       "reviews": [
         {
@@ -78,29 +67,29 @@
           "date": "2024-01-18",
           "text": "Great product! Noticeable improvement in skin texture after just a week."
         }
-      ]
+      ],
+      "id": 2,
+      "image": "https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?auto=format&fit=crop&w=400&h=400",
+      "description": "Premium anti-aging face serum with natural ingredients. Hydrates and rejuvenates your skin for a youthful glow.",
+      "features": [
+        "Anti-aging formula",
+        "Natural ingredients",
+        "Deep hydration",
+        "Suitable for all skin types"
+      ],
+      "rating": 4.8,
+      "category": "category2"
     },
     {
-      "id": 3,
-      "name": "Biryani Masala Mix",
-      "category": "category1",
-      "description": "Authentic biryani spice blend with traditional flavors. Perfect for making restaurant-style biryani at home.",
       "price": 3000,
+      "name": "Biryani Masala Mix",
+      "isBestSeller": false,
+      "isOffer": true,
       "originalPrice": 4500,
-      "image": "https://images.unsplash.com/photo-1609501676725-7186f3a1f2f1?auto=format&fit=crop&w=400&h=400",
       "images": [
         "https://images.unsplash.com/photo-1609501676725-7186f3a1f2f1?auto=format&fit=crop&w=800&h=800",
         "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=800&h=800",
         "https://images.unsplash.com/photo-1609501676725-7186f3a1f2f1?auto=format&fit=crop&w=800&h=800"
-      ],
-      "isBestSeller": false,
-      "isOffer": true,
-      "rating": 4.3,
-      "features": [
-        "Traditional recipe",
-        "Ready to use",
-        "Authentic flavor",
-        "No artificial colors"
       ],
       "reviews": [
         {
@@ -115,29 +104,29 @@
           "date": "2024-01-19",
           "text": "Good quality spice mix. The biryani turned out delicious with authentic taste."
         }
-      ]
+      ],
+      "id": 3,
+      "image": "https://images.unsplash.com/photo-1609501676725-7186f3a1f2f1?auto=format&fit=crop&w=400&h=400",
+      "description": "Authentic biryani spice blend with traditional flavors. Perfect for making restaurant-style biryani at home.",
+      "features": [
+        "Traditional recipe",
+        "Ready to use",
+        "Authentic flavor",
+        "No artificial colors"
+      ],
+      "rating": 4.3,
+      "category": "category1"
     },
     {
-      "id": 4,
-      "name": "Organic Health Mix",
-      "category": "category3",
-      "description": "Nutritious blend of organic grains, nuts, and seeds. Perfect for breakfast or snacks. Packed with protein and fiber.",
       "price": 5700,
+      "name": "Organic Health Mix",
+      "isBestSeller": true,
+      "isOffer": false,
       "originalPrice": null,
-      "image": "https://images.unsplash.com/photo-1606312619070-d48b4e0016a0?auto=format&fit=crop&w=400&h=400",
       "images": [
         "https://images.unsplash.com/photo-1606312619070-d48b4e0016a0?auto=format&fit=crop&w=800&h=800",
         "https://images.unsplash.com/photo-1609501676725-7186f3a1f2f1?auto=format&fit=crop&w=800&h=800",
         "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=800&h=800"
-      ],
-      "isBestSeller": true,
-      "isOffer": false,
-      "rating": 4.7,
-      "features": [
-        "100% organic",
-        "High protein content",
-        "Rich in fiber",
-        "No added sugar"
       ],
       "reviews": [
         {
@@ -152,29 +141,29 @@
           "date": "2024-01-17",
           "text": "Excellent quality! Great for my morning smoothies. Highly nutritious and tasty!"
         }
-      ]
+      ],
+      "id": 4,
+      "image": "https://images.unsplash.com/photo-1606312619070-d48b4e0016a0?auto=format&fit=crop&w=400&h=400",
+      "description": "Nutritious blend of organic grains, nuts, and seeds. Perfect for breakfast or snacks. Packed with protein and fiber.",
+      "features": [
+        "100% organic",
+        "High protein content",
+        "Rich in fiber",
+        "No added sugar"
+      ],
+      "rating": 4.7,
+      "category": "category3"
     },
     {
-      "id": 5,
-      "name": "Complete Skincare Set",
-      "category": "category2",
-      "description": "Complete 5-piece skincare routine set. Includes cleanser, toner, serum, moisturizer, and sunscreen.",
       "price": 24000,
+      "name": "Complete Skincare Set",
+      "isBestSeller": false,
+      "isOffer": true,
       "originalPrice": 30000,
-      "image": "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&w=400&h=400",
       "images": [
         "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&w=800&h=800",
         "https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&w=800&h=800",
         "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&h=800"
-      ],
-      "isBestSeller": false,
-      "isOffer": true,
-      "rating": 4.6,
-      "features": [
-        "5-piece complete set",
-        "All skin types",
-        "Natural ingredients",
-        "Best value bundle"
       ],
       "reviews": [
         {
@@ -189,29 +178,29 @@
           "date": "2024-01-16",
           "text": "Good quality products. The complete routine has improved my skin significantly."
         }
-      ]
+      ],
+      "id": 5,
+      "image": "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&w=400&h=400",
+      "description": "Complete 5-piece skincare routine set. Includes cleanser, toner, serum, moisturizer, and sunscreen.",
+      "features": [
+        "5-piece complete set",
+        "All skin types",
+        "Natural ingredients",
+        "Best value bundle"
+      ],
+      "rating": 4.6,
+      "category": "category2"
     },
     {
-      "id": 6,
-      "name": "Protein Energy Mix",
-      "category": "category3",
-      "description": "High-protein energy mix with nuts, seeds, and dried fruits. Perfect for post-workout or as a healthy snack.",
       "price": 7500,
+      "name": "Protein Energy Mix",
+      "isBestSeller": false,
+      "isOffer": false,
       "originalPrice": null,
-      "image": "https://images.unsplash.com/photo-1609501676725-7186f3a1f2f1?auto=format&fit=crop&w=400&h=400",
       "images": [
         "https://images.unsplash.com/photo-1609501676725-7186f3a1f2f1?auto=format&fit=crop&w=800&h=800",
         "https://images.unsplash.com/photo-1606312619070-d48b4e0016a0?auto=format&fit=crop&w=800&h=800",
         "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=800&h=800"
-      ],
-      "isBestSeller": false,
-      "isOffer": false,
-      "rating": 4.4,
-      "features": [
-        "High protein content",
-        "Natural ingredients",
-        "Energy boosting",
-        "No preservatives"
       ],
       "reviews": [
         {
@@ -226,29 +215,29 @@
           "date": "2024-01-12",
           "text": "Love this protein mix! High quality ingredients and great taste. Highly recommend!"
         }
-      ]
+      ],
+      "id": 6,
+      "image": "https://images.unsplash.com/photo-1609501676725-7186f3a1f2f1?auto=format&fit=crop&w=400&h=400",
+      "description": "High-protein energy mix with nuts, seeds, and dried fruits. Perfect for post-workout or as a healthy snack.",
+      "features": [
+        "High protein content",
+        "Natural ingredients",
+        "Energy boosting",
+        "No preservatives"
+      ],
+      "rating": 4.4,
+      "category": "category3"
     },
     {
-      "id": 7,
-      "name": "Garam Masala Mix",
-      "category": "category1",
-      "description": "Traditional garam masala blend with aromatic spices. Essential for Indian cooking, adds warmth and depth to dishes.",
       "price": 3600,
+      "name": "Garam Masala Mix",
+      "isBestSeller": true,
+      "isOffer": false,
       "originalPrice": null,
-      "image": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=400&h=400",
       "images": [
         "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=800&h=800",
         "https://images.unsplash.com/photo-1609501676725-7186f3a1f2f1?auto=format&fit=crop&w=800&h=800",
         "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=800&h=800"
-      ],
-      "isBestSeller": true,
-      "isOffer": false,
-      "rating": 4.9,
-      "features": [
-        "Traditional recipe",
-        "Aromatic blend",
-        "Freshly ground",
-        "Versatile spice mix"
       ],
       "reviews": [
         {
@@ -269,29 +258,29 @@
           "date": "2024-01-18",
           "text": "Perfect blend of spices! My curries have never tasted better. Exceeded all expectations!"
         }
-      ]
+      ],
+      "id": 7,
+      "image": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=400&h=400",
+      "description": "Traditional garam masala blend with aromatic spices. Essential for Indian cooking, adds warmth and depth to dishes.",
+      "features": [
+        "Traditional recipe",
+        "Aromatic blend",
+        "Freshly ground",
+        "Versatile spice mix"
+      ],
+      "rating": 4.9,
+      "category": "category1"
     },
     {
-      "id": 8,
-      "name": "Vitamin C Brightening Serum",
-      "category": "category2",
-      "description": "Powerful vitamin C serum that brightens and evens skin tone. Reduces dark spots and gives you a radiant glow.",
       "price": 9000,
+      "name": "Vitamin C Brightening Serum",
+      "isBestSeller": false,
+      "isOffer": true,
       "originalPrice": 12000,
-      "image": "https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&w=400&h=400",
       "images": [
         "https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&w=800&h=800",
         "https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?auto=format&fit=crop&w=800&h=800",
         "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&h=800"
-      ],
-      "isBestSeller": false,
-      "isOffer": true,
-      "rating": 4.2,
-      "features": [
-        "20% Vitamin C",
-        "Brightens skin tone",
-        "Reduces dark spots",
-        "Fast-absorbing formula"
       ],
       "reviews": [
         {
@@ -306,7 +295,18 @@
           "date": "2024-01-22",
           "text": "Amazing price for such quality serum. My dark spots are fading. Very happy!"
         }
-      ]
+      ],
+      "id": 8,
+      "image": "https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&w=400&h=400",
+      "description": "Powerful vitamin C serum that brightens and evens skin tone. Reduces dark spots and gives you a radiant glow.",
+      "features": [
+        "20% Vitamin C",
+        "Brightens skin tone",
+        "Reduces dark spots",
+        "Fast-absorbing formula"
+      ],
+      "rating": 4.2,
+      "category": "category2"
     }
   ]
 }
