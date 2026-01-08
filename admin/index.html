@@ -3,24 +3,21 @@
 <head>
   <meta charset="utf-8" />
   <title>FazaFoods CMS</title>
-  <!-- Load Decap CMS -->
-  <script src="https://unpkg.com/decap-cms@3.10.0/dist/decap-cms.js"></script>
 </head>
 <body>
   <!-- CMS will mount here -->
   <div id="nc-root"></div>
 
-  <!-- Initialize CMS after DOM is ready -->
+  <!-- Load Decap CMS AFTER the DOM -->
+  <script src="https://unpkg.com/decap-cms@3.10.0/dist/decap-cms.js"></script>
   <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      if (typeof DecapCMS !== "undefined") {
-        DecapCMS.init({
-          config: '/admin/config.yml'
-        });
-      } else {
-        console.error("DecapCMS library did not load");
-      }
-    });
+    if (typeof DecapCMS !== "undefined") {
+      DecapCMS.init({
+        config: '/admin/config.yml'
+      });
+    } else {
+      console.error("DecapCMS library did not load");
+    }
   </script>
 </body>
 </html>
