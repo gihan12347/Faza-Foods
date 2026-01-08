@@ -1,0 +1,121 @@
+backend:
+  name: git-gateway
+  branch: master
+
+# Where uploaded images are stored in the repo
+media_folder: "public/images/uploads"
+
+# How images are referenced on the site
+public_folder: "/images/uploads"
+
+# Optional: keep simple, publish immediately
+# (remove this if you want draft/review workflow)
+# publish_mode: editorial_workflow
+
+collections:
+  - name: "products"
+    label: "Products"
+    files:
+      - name: "productsFile"
+        label: "Product List"
+        file: "public/products.json"
+        format: "json"
+        fields:
+          - label: "Products"
+            name: "products"
+            widget: "list"
+            summary: "{{fields.name}} (ID: {{fields.id}})"
+            fields:
+              - label: "ID"
+                name: "id"
+                widget: "number"
+                min: 1
+
+              - label: "Product Name"
+                name: "name"
+                widget: "string"
+
+              - label: "Category"
+                name: "category"
+                widget: "select"
+                options:
+                  - { label: "Spices", value: "category1" }
+                  - { label: "Skincare", value: "category2" }
+                  - { label: "Health Mix", value: "category3" }
+
+              - label: "Description"
+                name: "description"
+                widget: "text"
+
+              - label: "Price"
+                name: "price"
+                widget: "number"
+                min: 0
+
+              - label: "Original Price"
+                name: "originalPrice"
+                widget: "number"
+                required: false
+                min: 0
+
+              - label: "Main Image"
+                name: "image"
+                widget: "image"
+
+              - label: "Gallery Images"
+                name: "images"
+                widget: "list"
+                field:
+                  label: "Image"
+                  name: "image"
+                  widget: "image"
+
+              - label: "Best Seller"
+                name: "isBestSeller"
+                widget: "boolean"
+                default: false
+
+              - label: "On Offer"
+                name: "isOffer"
+                widget: "boolean"
+                default: false
+
+              - label: "Rating"
+                name: "rating"
+                widget: "number"
+                value_type: "float"
+                min: 0
+                max: 5
+                step: 0.1
+
+              - label: "Features"
+                name: "features"
+                widget: "list"
+                field:
+                  label: "Feature"
+                  name: "feature"
+                  widget: "string"
+
+              - label: "Reviews"
+                name: "reviews"
+                widget: "list"
+                fields:
+                  - label: "Reviewer Name"
+                    name: "name"
+                    widget: "string"
+
+                  - label: "Rating"
+                    name: "rating"
+                    widget: "number"
+                    min: 1
+                    max: 5
+
+                  - label: "Date"
+                    name: "date"
+                    widget: "datetime"
+                    format: "YYYY-MM-DD"
+                    time_format: false
+
+                  - label: "Review Text"
+                    name: "text"
+                    widget: "text"

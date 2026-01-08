@@ -3,13 +3,16 @@ import { getReviews } from "./review.js";
 let products = [];
 
 async function loadProducts() {
-    try {
-        const response = await fetch('public/products.json');
-        if (!response.ok) throw new Error('Failed to load products');
-        products = await response.json();
-    } catch (error) {
-        console.error('Error loading products:', error);
-    }
+  try {
+    const response = await fetch('/public/products.json');
+    if (!response.ok) throw new Error('Failed to load products');
+
+    const data = await response.json();
+    products = data.products;
+
+  } catch (error) {
+    console.error('Error loading products:', error);
+  }
 }
 
 // ============================================
