@@ -2,15 +2,8 @@ backend:
   name: git-gateway
   branch: master
 
-# Where uploaded images are stored in the repo
 media_folder: "public/images/uploads"
-
-# How images are referenced on the site
 public_folder: "/images/uploads"
-
-# Optional: keep simple, publish immediately
-# (remove this if you want draft/review workflow)
-# publish_mode: editorial_workflow
 
 collections:
   - name: "products"
