@@ -58,11 +58,10 @@ function createProductCard(product) {
         <div class="product-card" data-product-id="${product.id}">
             <div class="product-image-container">
                 <img src="${product.image}" alt="${product.name}" class="product-image" loading="lazy">
-                ${product.isOffer ? `<div class="product-badge sale">${discount}% OFF</div>` : ''}
-                ${product.isBestSeller ? `<div class="product-badge">Best Seller</div>` : ''}
+                ${discount > 0 ? `<div class="product-badge sale">${discount}% OFF</div>` : ''}
             </div>
             <div class="product-info">
-                <div class="product-category">${product.category === 'category1' ? 'Food Mixes' : product.category === 'category2' ? 'Beauty Products' : 'Health Mixes'}</div>
+                <div class="product-category">${product.category}</div>
                 <h3 class="product-name">${product.name}</h3>
                 <p class="product-description">${product.description}</p>
                 <div class="product-footer">
@@ -144,10 +143,8 @@ function loadProductDetails() {
     }
     
     // Render product details
-    renderProductDetails(product);
-    
-    // Render reviews
-    renderReviews(productId);
+    renderProductDetails(product); 
+
     
     // Render related products
     const relatedProducts = products
@@ -157,9 +154,10 @@ function loadProductDetails() {
 }
 
 function renderProductDetails(product) {
+    renderReviews(product.id);
     const discount = product.originalPrice 
         ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-        : 0;
+        : 0;  
     
     const thumbnailsHTML = product.images.map((img, index) => 
         `<div class="thumbnail ${index === 0 ? 'active' : ''}" data-image="${img}">
@@ -167,8 +165,8 @@ function renderProductDetails(product) {
         </div>`
     ).join('');
     
-    const featuresHTML = product.features.map(feature => 
-        `<li>${feature}</li>`
+    const featuresHTML = product.ingredients.map(ingredient => 
+        `<li>${ingredient}</li>`
     ).join('');
     
     const content = document.getElementById('productDetailsContent');
@@ -182,11 +180,13 @@ function renderProductDetails(product) {
             </div>
         </div>
         <div class="product-info-detail">
-            <div class="product-category-detail">${product.category === 'category1' ? 'Food Mixes' : product.category === 'category2' ? 'Beauty Products' : 'Health Mixes'}</div>
+            <div class="product-category-detail">${product.category}</div>
             <h1 class="product-title-detail">${product.name}</h1>
             <div class="product-rating">
-                <span class="stars">${renderStars(product.rating)}</span>
-                <span class="rating-text">(${product.rating} based on ${product.reviews.length} reviews)</span>
+                <span class="stars" id="productStars">☆☆☆☆☆</span>
+                <span class="rating-text" id="productRatingText">
+                (Loading reviews…)
+            </span>
             </div>
             <div class="product-price-detail">
                 <span class="price-current-detail">${formatPrice(product.price)}</span>
@@ -195,7 +195,7 @@ function renderProductDetails(product) {
             </div>
             <p class="product-description-detail">${product.description}</p>
             <div class="product-features">
-                <h3>Key Features</h3>
+                <h3>Ingredients</h3>
                 <ul>
                     ${featuresHTML}
                 </ul>
@@ -221,32 +221,94 @@ function renderProductDetails(product) {
 }
 
 async function renderReviews(productId) {
-    const reviews = await getReviews(productId);
-    console.log("Reviews array:", reviews);
+    try {
+        const reviews = await getReviews(productId);
+        const reviewCount = reviews.length;
+        const totalRating = reviewCount
+            ? reviews.reduce((sum, r) => sum + Number(r.rating), 0)
+            : 0;
 
-    const container = document.getElementById("reviewsContainer");
-    if (!container) return;
+        const finalRating = reviewCount
+            ? Number((totalRating / reviewCount).toFixed(1))
+            : 0;
 
-    if (reviews.length === 0) {
-        container.innerHTML = "<p>No reviews yet. Be the first to review this product!</p>";
-        return;
-    }
+        console.log("Reviews array:", reviews);
 
-    container.innerHTML = reviews.map(review => `
-        <div class="review-card">
-            <div class="review-header">
-                <div class="reviewer-info">
-                    <div class="reviewer-avatar">${review.name.charAt(0)}</div>
-                    <div class="reviewer-details">
-                        <h4>${review.name}</h4>
-                        <div class="review-date">${formatDate(review.date)}</div>
+        const container = document.getElementById("reviewsContainer");
+        if (!container) return;
+
+        if (reviews.length === 0) {
+            container.innerHTML = "<p>No reviews yet. Be the first to review this product!</p>";
+            
+        } else {
+            // Create carousel structure
+            container.innerHTML = `
+                <div class="reviews-carousel">
+                    <button class="carousel-arrow carousel-arrow-left" aria-label="Previous reviews">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 18l-6-6 6-6"/>
+                        </svg>
+                    </button>
+                    <div class="reviews-track">
+                        ${reviews.map(review => `
+                            <div class="review-card">
+                                <div class="review-header">
+                                    <div class="reviewer-info">
+                                        <div class="reviewer-avatar">${review.name.charAt(0)}</div>
+                                        <div class="reviewer-details">
+                                            <h4>${review.name}</h4>
+                                            <div class="review-date">${formatDate(review.date)}</div>
+                                        </div>
+                                    </div>
+                                    <div class="review-rating">${renderStars(review.rating)}</div>
+                                </div>
+                                <p class="review-text">${review.text}</p>
+                            </div>
+                        `).join('')}
                     </div>
+                    <button class="carousel-arrow carousel-arrow-right" aria-label="Next reviews">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </button>
                 </div>
-                <div class="review-rating">${renderStars(review.rating)}</div>
-            </div>
-            <p class="review-text">${review.text}</p>
-        </div>
-    `).join('');
+            `;
+
+            // Add carousel navigation functionality
+            const track = container.querySelector('.reviews-track');
+            const leftArrow = container.querySelector('.carousel-arrow-left');
+            const rightArrow = container.querySelector('.carousel-arrow-right');
+            
+            const scrollAmount = 350; // Adjust based on your card width + gap
+
+            leftArrow.addEventListener('click', () => {
+                track.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            });
+
+            rightArrow.addEventListener('click', () => {
+                track.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            });
+
+            // Update arrow visibility based on scroll position
+            const updateArrows = () => {
+                leftArrow.style.opacity = track.scrollLeft <= 0 ? '0.3' : '1';
+                leftArrow.style.pointerEvents = track.scrollLeft <= 0 ? 'none' : 'auto';
+                
+                const maxScroll = track.scrollWidth - track.clientWidth;
+                rightArrow.style.opacity = track.scrollLeft >= maxScroll - 1 ? '0.3' : '1';
+                rightArrow.style.pointerEvents = track.scrollLeft >= maxScroll - 1 ? 'none' : 'auto';
+            };
+
+            track.addEventListener('scroll', updateArrows);
+            updateArrows();
+        }
+        document.getElementById("productStars").innerHTML = renderStars(finalRating);
+        document.getElementById("productRatingText").textContent = `(${finalRating} based on ${reviewCount} reviews)`;
+    } catch (error) {
+        console.error("Error rendering reviews:", error);
+        document.getElementById("productStars").innerHTML = renderStars(0);
+        document.getElementById("productRatingText").textContent = `(0 based on 0 reviews)`;
+    }
 }
 
 
@@ -315,10 +377,16 @@ async function init() {
     } else {
         // Load products on index page
         const bestSellers = products.filter(p => p.isBestSeller);
-        const offers = products.filter(p => p.isOffer);
+        const offers = products.filter(p => p.originalPrice > p.price);
         
-        renderProducts(bestSellers, 'bestSellersGrid');
-        renderProducts(offers, 'offersGrid');
+        if (bestSellers.length) {
+            renderProducts(bestSellers, 'bestSellersGrid');
+        }
+        if (offers.length) {
+            renderProducts(offers, 'offersGrid');
+        } else {
+            document.querySelector('a[href="#offers"]')?.closest('li')?.remove();
+        }
         renderProducts(products, 'productsGrid');
         
         // Initialize filter buttons

@@ -140,6 +140,11 @@
     <script src="jquery.js"></script>
     <script type="module" src="review.js"></script>
     <script src="include.js"></script>
+    <script>
+        headerReady.then(() => {
+            setActiveNavById('nav-products');
+        });
+    </script>
     <script type="module" src="script.js"></script>
     <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
     <script>

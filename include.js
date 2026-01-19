@@ -5,3 +5,15 @@ window.headerReady = (async function () {
     const html = await res.text();
     document.getElementById('header').innerHTML = html;
 })();
+
+window.setActiveNavById = function (activeId) {
+    document
+        .querySelectorAll('.nav-list a')
+        .forEach(link => link.classList.remove('active'));
+
+    const activeLink = document.getElementById(activeId);
+    if (activeLink) {
+        activeLink.classList.add('active');
+    }
+};
+

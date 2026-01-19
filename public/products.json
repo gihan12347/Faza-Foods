@@ -2,8 +2,8 @@
   "products": [
     {
       "id": 1,
-      "name": "Premium Curry Powder Mix",
-      "category": "category1",
+      "name": "Sprouted ragi Mix",
+      "category": "Spicy Foods",
       "description": "Authentic blend of aromatic spices perfect for curries. Rich in flavor with a perfect balance of heat and aroma.",
       "price": 3900,
       "originalPrice": 5100,
@@ -16,7 +16,7 @@
       "isBestSeller": true,
       "isOffer": false,
       "rating": 4.5,
-      "features": [
+      "ingredients": [
         "100% natural spices",
         "No preservatives added",
         "Rich aromatic flavor",
@@ -46,7 +46,7 @@
     {
       "id": 2,
       "name": "Luxury Face Serum",
-      "category": "category2",
+      "category": "Cosmetics Products",
       "description": "Premium anti-aging face serum with natural ingredients. Hydrates and rejuvenates your skin for a youthful glow.",
       "price": 10500,
       "originalPrice": null,
@@ -59,7 +59,7 @@
       "isBestSeller": true,
       "isOffer": false,
       "rating": 4.8,
-      "features": [
+      "ingredients": [
         "Anti-aging formula",
         "Natural ingredients",
         "Deep hydration",
@@ -83,7 +83,7 @@
     {
       "id": 3,
       "name": "Biryani Masala Mix",
-      "category": "category1",
+      "category": "Spicy Foods",
       "description": "Authentic biryani spice blend with traditional flavors. Perfect for making restaurant-style biryani at home.",
       "price": 3000,
       "originalPrice": 4500,
@@ -96,7 +96,7 @@
       "isBestSeller": false,
       "isOffer": true,
       "rating": 4.3,
-      "features": [
+      "ingredients": [
         "Traditional recipe",
         "Ready to use",
         "Authentic flavor",
@@ -120,7 +120,7 @@
     {
       "id": 4,
       "name": "Organic Health Mix",
-      "category": "category3",
+      "category": "Other Products",
       "description": "Nutritious blend of organic grains, nuts, and seeds. Perfect for breakfast or snacks. Packed with protein and fiber.",
       "price": 5700,
       "originalPrice": null,
@@ -133,7 +133,7 @@
       "isBestSeller": true,
       "isOffer": false,
       "rating": 4.7,
-      "features": [
+      "ingredients": [
         "100% organic",
         "High protein content",
         "Rich in fiber",
@@ -157,7 +157,7 @@
     {
       "id": 5,
       "name": "Complete Skincare Set",
-      "category": "category2",
+      "category": "Cosmetics Products",
       "description": "Complete 5-piece skincare routine set. Includes cleanser, toner, serum, moisturizer, and sunscreen.",
       "price": 24000,
       "originalPrice": 30000,
@@ -170,7 +170,7 @@
       "isBestSeller": false,
       "isOffer": true,
       "rating": 4.6,
-      "features": [
+      "ingredients": [
         "5-piece complete set",
         "All skin types",
         "Natural ingredients",
@@ -194,7 +194,7 @@
     {
       "id": 6,
       "name": "Protein Energy Mix",
-      "category": "category3",
+      "category": "Other Products",
       "description": "High-protein energy mix with nuts, seeds, and dried fruits. Perfect for post-workout or as a healthy snack.",
       "price": 7500,
       "originalPrice": null,
@@ -207,7 +207,7 @@
       "isBestSeller": false,
       "isOffer": false,
       "rating": 4.4,
-      "features": [
+      "ingredients": [
         "High protein content",
         "Natural ingredients",
         "Energy boosting",
@@ -231,7 +231,7 @@
     {
       "id": 7,
       "name": "Garam Masala Mix",
-      "category": "category1",
+      "category": "Spicy Foods",
       "description": "Traditional garam masala blend with aromatic spices. Essential for Indian cooking, adds warmth and depth to dishes.",
       "price": 3600,
       "originalPrice": null,
@@ -244,7 +244,7 @@
       "isBestSeller": true,
       "isOffer": false,
       "rating": 4.9,
-      "features": [
+      "ingredients": [
         "Traditional recipe",
         "Aromatic blend",
         "Freshly ground",
@@ -274,7 +274,7 @@
     {
       "id": 8,
       "name": "Vitamin C Brightening Serum",
-      "category": "category2",
+      "category": "Cosmetics Products",
       "description": "Powerful vitamin C serum that brightens and evens skin tone. Reduces dark spots and gives you a radiant glow.",
       "price": 9000,
       "originalPrice": 12000,
@@ -287,7 +287,7 @@
       "isBestSeller": false,
       "isOffer": true,
       "rating": 4.2,
-      "features": [
+      "ingredients": [
         "20% Vitamin C",
         "Brightens skin tone",
         "Reduces dark spots",

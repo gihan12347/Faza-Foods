@@ -60,9 +60,9 @@
             </div>
             <div class="filter-bar">
                 <button class="filter-btn active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="category1">Food Mixes</button>
-                <button class="filter-btn" data-filter="category2">Beauty Products</button>
-                <button class="filter-btn" data-filter="category3">Health Mixes</button>
+                <button class="filter-btn" data-filter="Spicy Foods">Spicy Foods</button>
+                <button class="filter-btn" data-filter="Cosmetics Products">Cosmetics Products</button>
+                <button class="filter-btn" data-filter="Other Products">Other Products</button>
             </div>
             <div class="products-grid" id="productsGrid">
                 <!-- Products will be dynamically loaded here -->
@@ -111,6 +111,11 @@
     </footer>
     <script src="jquery.js"></script>
     <script src="include.js"></script>
+    <script>
+        headerReady.then(() => {
+            setActiveNavById('nav-home');
+        });
+    </script>
     <script type="module" src="script.js"></script>
     <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
     <script>
