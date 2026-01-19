@@ -19,6 +19,7 @@ collections:
             widget: "list"
             summary: "{{fields.name}} (ID: {{fields.id}})"
             fields:
+
               - label: "ID"
                 name: "id"
                 widget: "number"
@@ -32,9 +33,9 @@ collections:
                 name: "category"
                 widget: "select"
                 options:
-                  - { label: "Spices", value: "category1" }
-                  - { label: "Skincare", value: "category2" }
-                  - { label: "Health Mix", value: "category3" }
+                  - { label: "Spicy Foods", value: "Spicy Foods" }
+                  - { label: "Cosmetics Products", value: "Cosmetics Products" }
+                  - { label: "Other Products", value: "Other Products" }
 
               - label: "Description"
                 name: "description"
@@ -51,13 +52,10 @@ collections:
                 required: false
                 min: 0
 
-              - label: "Main Image"
-                name: "image"
-                widget: "image"
-
-              - label: "Gallery Images"
+              - label: "Product Images"
                 name: "images"
                 widget: "list"
+                min: 1
                 field:
                   label: "Image"
                   name: "image"
@@ -73,13 +71,13 @@ collections:
                 widget: "boolean"
                 default: false
 
-              - label: "Rating"
-                name: "rating"
-                widget: "number"
-                value_type: "float"
-                min: 0
-                max: 5
-                step: 0.1
+              - label: "Ingredients"
+                name: "ingredients"
+                widget: "list"
+                field:
+                  label: "Ingredient"
+                  name: "ingredient"
+                  widget: "string"
 
               - label: "Features"
                 name: "features"
