@@ -19,7 +19,6 @@ collections:
             widget: "list"
             summary: "{{fields.name}} (ID: {{fields.id}})"
             fields:
-
               - label: "ID"
                 name: "id"
                 widget: "number"
