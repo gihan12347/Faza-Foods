@@ -19,22 +19,25 @@ collections:
             widget: "list"
             summary: "{{fields.name}} (ID: {{fields.id}})"
             fields:
+
               - label: "ID"
                 name: "id"
                 widget: "number"
                 min: 1
+                required: true
 
               - label: "Product Name"
                 name: "name"
                 widget: "string"
+                required: true
 
               - label: "Category"
                 name: "category"
                 widget: "select"
                 options:
-                  - { label: "Spicy Foods", value: "Spicy Foods" }
-                  - { label: "Cosmetics Products", value: "Cosmetics Products" }
-                  - { label: "Other Products", value: "Other Products" }
+                  - "Spicy Foods"
+                  - "Cosmetics Products"
+                  - "Other Products"
 
               - label: "Description"
                 name: "description"
@@ -48,13 +51,23 @@ collections:
               - label: "Original Price"
                 name: "originalPrice"
                 widget: "number"
-                required: false
                 min: 0
+                required: false
 
-              - label: "Product Images"
+              - label: "Weight"
+                name: "weight"
+                widget: "string"
+                hint: "Example: 50g, 250g, 100ml"
+
+              - label: "Main Image"
+                name: "image"
+                widget: "image"
+                required: false
+
+              - label: "Additional Images"
                 name: "images"
                 widget: "list"
-                min: 1
+                required: false
                 field:
                   label: "Image"
                   name: "image"
@@ -62,11 +75,6 @@ collections:
 
               - label: "Best Seller"
                 name: "isBestSeller"
-                widget: "boolean"
-                default: false
-
-              - label: "On Offer"
-                name: "isOffer"
                 widget: "boolean"
                 default: false
 
@@ -78,34 +86,14 @@ collections:
                   name: "ingredient"
                   widget: "string"
 
-              - label: "Features"
-                name: "features"
+              - label: "Used For"
+                name: "useFor"
                 widget: "list"
                 field:
-                  label: "Feature"
-                  name: "feature"
+                  label: "Use"
+                  name: "use"
                   widget: "string"
 
-              - label: "Reviews"
-                name: "reviews"
-                widget: "list"
-                fields:
-                  - label: "Reviewer Name"
-                    name: "name"
-                    widget: "string"
-
-                  - label: "Rating"
-                    name: "rating"
-                    widget: "number"
-                    min: 1
-                    max: 5
-
-                  - label: "Date"
-                    name: "date"
-                    widget: "datetime"
-                    format: "YYYY-MM-DD"
-                    time_format: false
-
-                  - label: "Review Text"
-                    name: "text"
-                    widget: "text"
+              - label: "How To Use"
+                name: "howToUse"
+                widget: "text"

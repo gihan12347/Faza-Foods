@@ -4,204 +4,391 @@
       "id": 1,
       "name": "Sprouted Ragi Mix",
       "category": "Spicy Foods",
-      "description": "Authentic blend of aromatic spices perfect for curries. Rich in flavor with a perfect balance of heat and aroma.",
-      "price": 3900,
-      "originalPrice": 5100,
-      "images": [
-        "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=800&h=800",
-        "https://images.unsplash.com/photo-1609501676725-7186f3a1f2f1?auto=format&fit=crop&w=800&h=800"
-      ],
+      "description": "Nutritious sprouted ragi mix enriched with cocoa and nuts.",
+      "price": 320,
+      "originalPrice": 320,
+      "weight": "50g",
+      "image": "/public/images/sprouted-ragi-mix.jpg",
+      "images": ["/public/images/sprouted-ragi-mix.jpg"],
       "isBestSeller": true,
-      "isOffer": true,
-      "ingredients": [
-        "100% natural spices",
-        "No preservatives added",
-        "Rich aromatic flavor",
-        "Perfect for all curry dishes"
-      ],
-      "features": [
-        "100% natural spices",
-        "No preservatives added",
-        "Rich aromatic flavor",
-        "Perfect for all curry dishes"
-      ],
-      "reviews": [
-        {
-          "name": "Priya Sharma",
-          "rating": 5,
-          "date": "2024-01-15",
-          "text": "Excellent curry powder! The flavor is authentic and rich."
-        },
-        {
-          "name": "Raj Patel",
-          "rating": 4,
-          "date": "2024-01-10",
-          "text": "Great quality spices. The blend is perfect."
-        },
-        {
-          "name": "Meera Desai",
-          "rating": 5,
-          "date": "2024-01-05",
-          "text": "Best curry powder I've tried!"
-        }
-      ]
+      "ingredients": ["Sprouted Ragi", "Cocoa powder", "Sugar", "Nuts"],
+      "useFor": ["Weight gain", "Increase immunity", "Increase calcium"],
+      "howToUse": "Mix with hot milk"
     },
     {
       "id": 2,
-      "name": "Luxury Face Serum",
-      "category": "Cosmetics Products",
-      "description": "Premium anti-aging face serum with natural ingredients. Hydrates and rejuvenates your skin for a youthful glow.",
-      "price": 10500,
-      "originalPrice": null,
-      "images": [
-        "https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?auto=format&fit=crop&w=800&h=800",
-        "https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&w=800&h=800"
-      ],
+      "name": "Sprouted Ragi Powder",
+      "category": "Spicy Foods",
+      "description": "Healthy sprouted ragi powder for daily nutrition.",
+      "price": 400,
+      "originalPrice": 400,
+      "weight": "100g",
+      "image": "/public/images/sprouted-ragi-powder.jpg",
+      "images": ["/public/images/sprouted-ragi-powder.jpg"],
       "isBestSeller": true,
-      "isOffer": false,
-      "ingredients": [
-        "Anti-aging formula",
-        "Natural ingredients",
-        "Deep hydration",
-        "Suitable for all skin types"
-      ],
-      "features": [
-        "Anti-aging formula",
-        "Natural ingredients",
-        "Deep hydration",
-        "Suitable for all skin types"
-      ],
-      "reviews": [
-        {
-          "name": "Emily Chen",
-          "rating": 5,
-          "date": "2024-01-20",
-          "text": "Amazing serum! My skin feels so smooth and hydrated."
-        },
-        {
-          "name": "David Wilson",
-          "rating": 4,
-          "date": "2024-01-18",
-          "text": "Great product with noticeable results."
-        }
-      ]
+      "ingredients": ["Sprouted Ragi", "Cocoa powder", "Sugar", "Nuts"],
+      "useFor": ["Increase immunity"],
+      "howToUse": "Making porridge"
     },
     {
       "id": 3,
-      "name": "Biryani Masala Mix",
-      "category": "Spicy Foods",
-      "description": "Authentic biryani spice blend with traditional flavors.",
-      "price": 3000,
-      "originalPrice": 4500,
-      "images": [
-        "https://images.unsplash.com/photo-1609501676725-7186f3a1f2f1?auto=format&fit=crop&w=800&h=800"
-      ],
+      "name": "Lime Pickle",
+      "category": "Other Products",
+      "description": "Traditional homemade lime pickle.",
+      "price": 450,
+      "originalPrice": 450,
+      "weight": "250g",
+      "image": "/public/images/lime-pickle.jpg",
+      "images": ["/public/images/lime-pickle.jpg"],
       "isBestSeller": false,
-      "isOffer": true,
-      "ingredients": [
-        "Traditional recipe",
-        "Ready to use",
-        "Authentic flavor",
-        "No artificial colors"
-      ],
-      "features": [
-        "Traditional recipe",
-        "Ready to use",
-        "Authentic flavor",
-        "No artificial colors"
-      ],
-      "reviews": [
-        {
-          "name": "Lisa Anderson",
-          "rating": 5,
-          "date": "2024-01-22",
-          "text": "Amazing biryani masala!"
-        },
-        {
-          "name": "Robert Taylor",
-          "rating": 4,
-          "date": "2024-01-19",
-          "text": "Good quality spice mix."
-        }
-      ]
+      "ingredients": ["Lemon", "Chili", "Chili flakes", "Salt"],
+      "useFor": ["Eating with rice"],
+      "howToUse": "Serve with rice or rotti"
     },
     {
       "id": 4,
-      "name": "Organic Health Mix",
+      "name": "String Hopper Flour",
       "category": "Other Products",
-      "description": "Nutritious blend of organic grains, nuts, and seeds.",
-      "price": 5700,
-      "originalPrice": null,
-      "images": [
-        "https://images.unsplash.com/photo-1606312619070-d48b4e0016a0?auto=format&fit=crop&w=800&h=800"
-      ],
+      "description": "Pure raw rice flour for string hoppers.",
+      "price": 250,
+      "originalPrice": 250,
+      "weight": "250g",
+      "image": "/public/images/string-hopper-flour.jpg",
+      "images": ["/public/images/string-hopper-flour.jpg"],
       "isBestSeller": true,
-      "isOffer": false,
-      "ingredients": [
-        "100% organic",
-        "High protein content",
-        "Rich in fiber",
-        "No added sugar"
-      ],
-      "features": [
-        "100% organic",
-        "High protein content",
-        "Rich in fiber",
-        "No added sugar"
-      ],
-      "reviews": [
-        {
-          "name": "Jennifer Brown",
-          "rating": 5,
-          "date": "2024-01-21",
-          "text": "Nutritious and delicious!"
-        },
-        {
-          "name": "Chris Martinez",
-          "rating": 5,
-          "date": "2024-01-17",
-          "text": "Excellent quality."
-        }
-      ]
+      "ingredients": ["100% Raw rice"],
+      "useFor": ["Making string hoppers"],
+      "howToUse": "Mix with hot water and prepare string hoppers"
     },
     {
       "id": 5,
-      "name": "Complete Skincare Set",
-      "category": "Cosmetics Products",
-      "description": "Complete 5-piece skincare routine set.",
-      "price": 24000,
-      "originalPrice": 30000,
-      "images": [
-        "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&w=800&h=800"
-      ],
+      "name": "Sukku Coffee",
+      "category": "Other Products",
+      "description": "Traditional herbal coffee mix.",
+      "price": 250,
+      "originalPrice": 250,
+      "weight": "50g",
+      "image": "/public/images/sukku-coffee.jpg",
+      "images": ["/public/images/sukku-coffee.jpg"],
       "isBestSeller": false,
-      "isOffer": true,
-      "ingredients": [
-        "5-piece complete set",
-        "All skin types",
-        "Natural ingredients",
-        "Best value bundle"
-      ],
-      "features": [
-        "5-piece complete set",
-        "All skin types",
-        "Natural ingredients",
-        "Best value bundle"
-      ],
-      "reviews": [
-        {
-          "name": "Amanda White",
-          "rating": 5,
-          "date": "2024-01-23",
-          "text": "Perfect skincare set!"
-        },
-        {
-          "name": "James Lee",
-          "rating": 4,
-          "date": "2024-01-16",
-          "text": "Good quality products."
-        }
-      ]
+      "ingredients": ["Coffee seed", "Dried ginger", "Coriander", "Fenugreek"],
+      "useFor": ["Hot coffee"],
+      "howToUse": "Mix with hot water and sugar"
+    },
+    {
+      "id": 6,
+      "name": "Aata Flour",
+      "category": "Other Products",
+      "description": "Whole wheat flour blend.",
+      "price": 380,
+      "originalPrice": 380,
+      "weight": "500g",
+      "image": "/public/images/atta-flour.jpg",
+      "images": ["/public/images/atta-flour.jpg"],
+      "isBestSeller": false,
+      "ingredients": ["Whole wheat seed", "Chickpea"],
+      "useFor": ["Rotti", "Chapatti", "Cakes"],
+      "howToUse": "Use in any recipe"
+    },
+    {
+      "id": 7,
+      "name": "Kodhipaal",
+      "category": "Spicy Foods",
+      "description": "Spicy porridge mix.",
+      "price": 250,
+      "originalPrice": 250,
+      "weight": "100g",
+      "image": "",
+      "images": [""],
+      "isBestSeller": false,
+      "ingredients": ["Rice", "Sukku", "Pepper"],
+      "useFor": ["Spicy porridge"],
+      "howToUse": "Prepare as porridge"
+    },
+    {
+      "id": 8,
+      "name": "Turmeric Powder",
+      "category": "Spicy Foods",
+      "description": "Pure turmeric powder.",
+      "price": 300,
+      "originalPrice": 300,
+      "weight": "50g",
+      "image": "/public/images/turmeric-powder.jpg",
+      "images": ["/public/images/turmeric-powder.jpg"],
+      "isBestSeller": true,
+      "ingredients": ["100% Turmeric"],
+      "useFor": ["Cooking"],
+      "howToUse": "Add to recipes"
+    },
+    {
+      "id": 9,
+      "name": "Tooth Powder",
+      "category": "Other Products",
+      "description": "Natural herbal tooth powder.",
+      "price": 150,
+      "originalPrice": 150,
+      "weight": "50g",
+      "image": "/public/images/tooth-powder.jpg",
+      "images": ["/public/images/tooth-powder.jpg"],
+      "isBestSeller": false,
+      "ingredients": ["Aralu", "Bulu", "Nelli", "Turmeric", "Salt", "Clove", "Cardamom"],
+      "useFor": ["Brushing teeth"],
+      "howToUse": "Brush teeth normally"
+    },
+    {
+      "id": 10,
+      "name": "Kumkumadhi Thailam",
+      "category": "Other Products",
+      "description": "Herbal oil for skin pigmentation and dark circles.",
+      "price": 2200,
+      "originalPrice": 2200,
+      "weight": "15ml",
+      "image": "/public/images/kumkumadhi-thailam.jpg",
+      "images": ["/public/images/kumkumadhi-thailam.jpg"],
+      "isBestSeller": false,
+      "ingredients": ["Sesame oil", "Goat milk", "Dhashamoola", "Saffron", "Manjistha"],
+      "useFor": ["Curing dark circles", "Pigmentation", "Uneven tone"],
+      "howToUse": "Apply a few drops on face and neck, massage"
+    },
+    {
+      "id": 11,
+      "name": "Hair Oil",
+      "category": "Cosmetics Products",
+      "description": "Coconut-based hair oil for overall hair health.",
+      "price": 1600,
+      "originalPrice": 1600,
+      "weight": "200ml",
+      "image": "/public/images/oil.jpg",
+      "images": ["/public/images/oil.jpg"],
+      "isBestSeller": false,
+      "ingredients": ["Coconut oil", "Curry leaves", "Henna", "Karisalankanni", "Fenugreek", "Hibiscus", "Vempalam pattai", "Neem", "Gotukola", "Black seed", "Alovera", "Onion"],
+      "useFor": ["Cure hair problems"],
+      "howToUse": "Apply on hair, leave 1-2 hours, then wash"
+    },
+    {
+      "id": 12,
+      "name": "Face Mask",
+      "category": "Cosmetics Products",
+      "description": "Brightening face mask with herbal powders.",
+      "price": 700,
+      "originalPrice": 700,
+      "weight": "50g",
+      "image": "",
+      "images": [""],
+      "isBestSeller": false,
+      "ingredients": ["Multani Mitti", "Rose Powder", "Kasturi Manjal"],
+      "useFor": ["Brightening face"],
+      "howToUse": "Mix with rose water, milk or alovera gel, apply for 15-20 min and wash"
+    },
+    {
+      "id": 13,
+      "name": "Jawwarisi Papadam",
+      "category": "Other Products",
+      "description": "Healthy snack made from jawwarisi.",
+      "price": 200,
+      "originalPrice": 200,
+      "weight": "50g",
+      "image": "/public/images/javvarisi-papadam.jpg",
+      "images": ["/public/images/javvarisi-papadam.jpg"],
+      "isBestSeller": false,
+      "ingredients": ["Jawwarisi", "Salt", "Chili flake", "Cumin"],
+      "useFor": ["Making snack"],
+      "howToUse": "Fry in hot oil"
+    },
+    {
+      "id": 14,
+      "name": "Health Mix",
+      "category": "Other Products",
+      "description": "Nutritious health mix for snacks.",
+      "price": 450,
+      "originalPrice": 450,
+      "weight": "250g",
+      "image": "/public/images/health-mix.jpg",
+      "images": ["/public/images/health-mix.jpg"],
+      "isBestSeller": false,
+      "ingredients": ["Kidney bean", "Chickpea", "Green gram", "Kurakkan", "White rice", "Red rice", "Green pea", "Kollu", "Sesame", "Ground nut", "Channa dal", "Mysoor dal", "Soya", "Wheat seed", "Corn seed"],
+      "useFor": ["Healthy snacks"],
+      "howToUse": "Add sugar, coconut, salt with warm water and make balls"
+    },
+    {
+      "id": 15,
+      "name": "Kollu Kanji Mix",
+      "category": "Spicy Foods",
+      "description": "Herbal mix to reduce weight and balance hormones.",
+      "price": 450,
+      "originalPrice": 450,
+      "weight": "100g",
+      "image": "",
+      "images": [""],
+      "isBestSeller": false,
+      "ingredients": ["Kollu", "Barly", "Green gram", "Fenugreek", "Pepper", "Cumin", "Sweet cumin"],
+      "useFor": ["Lose weight", "Reduce diabetic", "Hormone balance"],
+      "howToUse": "Make as porridge to serve"
+    },
+    {
+      "id": 16,
+      "name": "ABC Malt",
+      "category": "Spicy Foods",
+      "description": "Malt mix to increase hemoglobin and brighten skin.",
+      "price": 1300,
+      "originalPrice": 1300,
+      "weight": "50g",
+      "image": "/public/images/abc-malt.jpg",
+      "images": ["/public/images/abc-malt.jpg"],
+      "isBestSeller": false,
+      "ingredients": ["Apple", "Beetroot", "Carrot", "Nuts", "Cardamom"],
+      "useFor": ["Increase Hb level", "Brighten skin"],
+      "howToUse": "Mix with hot milk and serve"
+    },
+    {
+      "id": 17,
+      "name": "Beef Masala",
+      "category": "Spicy Foods",
+      "description": "Spice mix to make beef curry.",
+      "price": 150,
+      "originalPrice": 150,
+      "weight": "50g",
+      "image": "/public/images/beef-masala.jpg",
+      "images": ["/public/images/beef-masala.jpg"],
+      "isBestSeller": false,
+      "ingredients": ["Coriander", "Curry leaves", "Rampe", "Cinnamon leaves", "Cumin", "Sweet cumin", "Turmeric", "Chili", "Garlic", "Cinnamon", "Clove", "Cardamom", "Pepper"],
+      "useFor": ["Beef curry"],
+      "howToUse": "Add in beef curry"
+    },
+    {
+      "id": 18,
+      "name": "Chicken Masala",
+      "category": "Spicy Foods",
+      "description": "Spice mix for chicken curry.",
+      "price": 140,
+      "originalPrice": 140,
+      "weight": "50g",
+      "image": "/public/images/chicken-masala.jpg",
+      "images": ["/public/images/chicken-masala.jpg"],
+      "isBestSeller": false,
+      "ingredients": ["Coriander", "Curry leaves", "Rampe", "Cinnamon leaves", "Cumin", "Sweet cumin", "Turmeric", "Chili", "Cinnamon", "Clove", "Cardamom", "Chickpea", "Pepper"],
+      "useFor": ["Chicken curry"],
+      "howToUse": "Add in chicken curry"
+    },
+    {
+      "id": 19,
+      "name": "Biriyani Masala",
+      "category": "Spicy Foods",
+      "description": "Biriyani spice mix.",
+      "price": 300,
+      "originalPrice": 300,
+      "weight": "60g",
+      "image": "/public/images/biriyani-masala.jpg",
+      "images": ["/public/images/biriyani-masala.jpg"],
+      "isBestSeller": false,
+      "ingredients": ["Coriander", "Sweet cumin", "Cumin", "Chili", "Cardamom", "Cinnamon", "Clove", "Pepper", "Nutmeg", "Biriyani leaves", "Cinnamon leaves"],
+      "useFor": ["Biriyani recipes"],
+      "howToUse": "Add in biriyani recipes"
+    },
+    {
+      "id": 20,
+      "name": "Curry Powder",
+      "category": "Spicy Foods",
+      "description": "Curry spice mix for multiple recipes.",
+      "price": 440,
+      "originalPrice": 440,
+      "weight": "250g",
+      "image": "/public/images/curry-powder.jpg",
+      "images": ["/public/images/curry-powder.jpg"],
+      "isBestSeller": false,
+      "ingredients": ["Coriander", "Cumin", "Sweet cumin", "Chickpea", "Cardamom", "Clove", "Cinnamon", "Curry leaves", "Rampe", "Cinnamon leaves"],
+      "useFor": ["Cooking recipes"],
+      "howToUse": "Add in curry recipes"
+    },
+    {
+      "id": 21,
+      "name": "Chili Powder",
+      "category": "Spicy Foods",
+      "description": "100% pure chili powder.",
+      "price": 400,
+      "originalPrice": 400,
+      "weight": "250g",
+      "image": "/public/images/chilli-powder.jpg",
+      "images": ["/public/images/chilli-powder.jpg"],
+      "isBestSeller": false,
+      "ingredients": ["100% chili"],
+      "useFor": ["Cooking recipes"],
+      "howToUse": "Add in recipes"
+    },
+    {
+      "id": 22,
+      "name": "Banana Mix",
+      "category": "Other Products",
+      "description": "Banana and nut mix to increase weight and immunity.",
+      "price": 350,
+      "originalPrice": 350,
+      "weight": "50g",
+      "image": "/public/images/banana-mix.jpg",
+      "images": ["/public/images/banana-mix.jpg"],
+      "isBestSeller": false,
+      "ingredients": ["Koli kuttu", "Banana", "Nuts"],
+      "useFor": ["Increase weight", "Increase immunity"],
+      "howToUse": "Add in hot milk, making pancake, muffin, and dosa"
+    },
+    {
+      "id": 23,
+      "name": "Manjistha Soap",
+      "category": "Other Products",
+      "description": "Soap to brighten face and body.",
+      "price": 600,
+      "originalPrice": 600,
+      "weight": "50g",
+      "image": "",
+      "images": [""],
+      "isBestSeller": false,
+      "ingredients": ["Coconut oil", "Manjistha oil", "Castor oil", "Butter", "Caustic soda"],
+      "useFor": ["Brighten face and body"],
+      "howToUse": "Gently apply on face and body, then wash"
+    },
+    {
+      "id": 24,
+      "name": "Oil Pulling Mix",
+      "category": "Other Products",
+      "description": "Oil mix for strong and white teeth.",
+      "price": 650,
+      "originalPrice": 650,
+      "weight": "100ml",
+      "image": "/public/images/oil-pulling-mix.jpg",
+      "images": ["/public/images/oil-pulling-mix.jpg"],
+      "isBestSeller": false,
+      "ingredients": ["Sesame oil", "Clove"],
+      "useFor": ["Strong and white teeth"],
+      "howToUse": "Gargle in the morning"
+    },
+    {
+      "id": 25,
+      "name": "Pepper Powder",
+      "category": "Spicy Foods",
+      "description": "100% pure pepper powder.",
+      "price": 200,
+      "originalPrice": 200,
+      "weight": "50g",
+      "image": "/public/images/pepper-powder.jpg",
+      "images": ["/public/images/pepper-powder.jpg"],
+      "isBestSeller": false,
+      "ingredients": ["100% pepper seed"],
+      "useFor": ["Cooking recipes"],
+      "howToUse": "Add in curry recipes"
+    },
+    {
+      "id": 26,
+      "name": "Grow Fast",
+      "category": "Other Products",
+      "description": "Porridge mix for babies after 6 months.",
+      "price": 700,
+      "originalPrice": 700,
+      "weight": "100g",
+      "image": "",
+      "images": [""],
+      "isBestSeller": true,
+      "ingredients": ["Kuruluthuda", "Dal", "Ragi", "Sweet potato", "Carrot", "Moringa", "Banana"],
+      "useFor": ["Porridge for babies"],
+      "howToUse": "Prepare porridge for babies after 6 months"
     }
   ]
 }

@@ -50,8 +50,11 @@ function formatDate(dateString) {
 // Product Card Component
 // ============================================
 function createProductCard(product) {
-    const discount = product.originalPrice 
-        ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    const originalPrice = Number(product.originalPrice);
+    const currentPrice = Number(product.price);
+
+    const discount = (originalPrice > currentPrice)
+        ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
         : 0;
     
     return `
@@ -67,7 +70,7 @@ function createProductCard(product) {
                 <div class="product-footer">
                     <div class="product-price">
                         <span class="price-current">${formatPrice(product.price)}</span>
-                        ${product.originalPrice ? `<span class="price-original">${formatPrice(product.originalPrice)}</span>` : ''}
+                        ${discount > 0 ? `<span class="price-original">${formatPrice(product.originalPrice)}</span>` : ''}
                     </div>
                 </div>
             </div>
@@ -155,9 +158,13 @@ function loadProductDetails() {
 
 function renderProductDetails(product) {
     renderReviews(product.id);
-    const discount = product.originalPrice 
-        ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-        : 0;  
+    const originalPrice = Number(product.originalPrice);
+    const currentPrice = Number(product.price);
+
+    const discount = (originalPrice > currentPrice)
+        ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
+        : 0; 
+    console.log('Discount: ' + discount);
     
     const thumbnailsHTML = product.images.map((img, index) => 
         `<div class="thumbnail ${index === 0 ? 'active' : ''}" data-image="${img}">
@@ -190,8 +197,8 @@ function renderProductDetails(product) {
             </div>
             <div class="product-price-detail">
                 <span class="price-current-detail">${formatPrice(product.price)}</span>
-                ${product.originalPrice ? `<span class="price-original-detail">${formatPrice(product.originalPrice)}</span>` : ''}
-                ${product.originalPrice ? `<span class="product-badge sale" style="display: inline-block; margin-left: 1rem;">${discount}% OFF</span>` : ''}
+                ${discount > 0 ? `<span class="price-original-detail">${formatPrice(product.originalPrice)}</span>` : ''}
+                ${discount > 0 ? `<span class="product-badge sale" style="display: inline-block; margin-left: 1rem;">${discount}% OFF</span>` : ''}
             </div>
             <p class="product-description-detail">${product.description}</p>
             <div class="product-features">
@@ -385,6 +392,8 @@ async function init() {
         if (offers.length) {
             renderProducts(offers, 'offersGrid');
         } else {
+            const offersEl = document.getElementById('offers');
+            offersEl.style.display = 'none';
             document.querySelector('a[href="#offers"]')?.closest('li')?.remove();
         }
         renderProducts(products, 'productsGrid');
