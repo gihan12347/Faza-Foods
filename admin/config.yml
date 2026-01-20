@@ -72,6 +72,7 @@ collections:
                   label: "Image"
                   name: "image"
                   widget: "image"
+                  required: false
 
               - label: "Best Seller"
                 name: "isBestSeller"
@@ -81,19 +82,24 @@ collections:
               - label: "Ingredients"
                 name: "ingredients"
                 widget: "list"
+                required: false
                 field:
                   label: "Ingredient"
                   name: "ingredient"
                   widget: "string"
+                  required: false
 
               - label: "Used For"
                 name: "useFor"
                 widget: "list"
+                required: false
                 field:
                   label: "Use"
                   name: "use"
                   widget: "string"
+                  required: false
 
               - label: "How To Use"
                 name: "howToUse"
                 widget: "text"
+                required: false
