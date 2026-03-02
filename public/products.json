@@ -17,11 +17,11 @@
       "isBestSeller": true,
       "originalPrice": 320,
       "images": [
-        "/public/images/sprouted-ragi-mix.webp"
+        "/public/images/sprouted-ragi-mix.jpeg"
       ],
       "weight": "50g",
       "id": 1,
-      "image": "/public/images/sprouted-ragi-mix.webp",
+      "image": "/public/images/sprouted-ragi-mix.jpeg",
       "howToUse": "Mix with hot milk",
       "description": "Nutritious sprouted ragi mix enriched with cocoa and nuts.",
       "category": "Spicy Foods"
@@ -41,11 +41,11 @@
       "isBestSeller": true,
       "originalPrice": 400,
       "images": [
-        "/public/images/sprouted-ragi-powder.webp"
+        "/public/images/sprouted-ragi-powder.jpeg"
       ],
       "weight": "100g",
       "id": 2,
-      "image": "/public/images/sprouted-ragi-powder.webp",
+      "image": "/public/images/sprouted-ragi-powder.jpeg",
       "howToUse": "Making porridge",
       "description": "Healthy sprouted ragi powder for daily nutrition.",
       "category": "Spicy Foods"
@@ -65,11 +65,11 @@
       "isBestSeller": false,
       "originalPrice": 450,
       "images": [
-        "/public/images/lime-pickle.webp"
+        "/public/images/lime-pickle.jpeg"
       ],
       "weight": "250g",
       "id": 3,
-      "image": "/public/images/lime-pickle.webp",
+      "image": "/public/images/lime-pickle.jpeg",
       "howToUse": "Serve with rice or rotti",
       "description": "Traditional homemade lime pickle.",
       "category": "Other Products"
@@ -86,11 +86,11 @@
       "isBestSeller": true,
       "originalPrice": 250,
       "images": [
-        "/public/images/string-hopper-flour.webp"
+        "/public/images/string-hopper-flour.jpeg"
       ],
       "weight": "250g",
       "id": 4,
-      "image": "/public/images/string-hopper-flour.webp",
+      "image": "/public/images/string-hopper-flour.jpeg",
       "howToUse": "Mix with hot water and prepare string hoppers",
       "description": "Pure raw rice flour for string hoppers.",
       "category": "Other Products"
@@ -110,11 +110,11 @@
       "isBestSeller": false,
       "originalPrice": 250,
       "images": [
-        "/public/images/sukku-coffee.webp"
+        "/public/images/sukku-coffee.jpeg"
       ],
       "weight": "50g",
       "id": 5,
-      "image": "/public/images/sukku-coffee.webp",
+      "image": "/public/images/sukku-coffee.jpeg",
       "howToUse": "Mix with hot water and sugar",
       "description": "Traditional herbal coffee mix.",
       "category": "Other Products"
@@ -134,11 +134,11 @@
       "isBestSeller": false,
       "originalPrice": 380,
       "images": [
-        "/public/images/atta-flour.webp"
+        "/public/images/atta-flour.jpeg"
       ],
       "weight": "500g",
       "id": 6,
-      "image": "/public/images/atta-flour.webp",
+      "image": "/public/images/atta-flour.jpeg",
       "howToUse": "Use in any recipe",
       "description": "Whole wheat flour blend.",
       "category": "Other Products"
@@ -161,7 +161,7 @@
       ],
       "weight": "100g",
       "id": 7,
-      "image": "",
+      "image": "/public/images/kodhipaal.jpeg",
       "howToUse": "Prepare as porridge",
       "description": "Spicy porridge mix.",
       "category": "Spicy Foods"
@@ -178,11 +178,11 @@
       "isBestSeller": true,
       "originalPrice": 300,
       "images": [
-        "/public/images/turmeric-powder.webp"
+        "/public/images/turmeric-powder.jpeg"
       ],
       "weight": "50g",
       "id": 8,
-      "image": "/public/images/turmeric-powder.webp",
+      "image": "/public/images/turmeric-powder.jpeg",
       "howToUse": "Add to recipes",
       "description": "Pure turmeric powder.",
       "category": "Spicy Foods"
@@ -205,11 +205,11 @@
       "isBestSeller": false,
       "originalPrice": 150,
       "images": [
-        "/public/images/tooth-powder.webp"
+        "/public/images/tooth-powder.jpeg"
       ],
       "weight": "50g",
       "id": 9,
-      "image": "/public/images/tooth-powder.webp",
+      "image": "/public/images/tooth-powder.jpeg",
       "howToUse": "Brush teeth normally",
       "description": "Natural herbal tooth powder.",
       "category": "Other Products"
@@ -232,11 +232,11 @@
       "isBestSeller": false,
       "originalPrice": 2200,
       "images": [
-        "/public/images/kumkumadhi-thailam.webp"
+        "/public/images/kumkumadhi-thailam.jpeg"
       ],
       "weight": "15ml",
       "id": 10,
-      "image": "/public/images/kumkumadhi-thailam.webp",
+      "image": "/public/images/kumkumadhi-thailam.jpeg",
       "howToUse": "Apply a few drops on face and neck, massage",
       "description": "Herbal oil for skin pigmentation and dark circles.",
       "category": "Other Products"
@@ -264,11 +264,11 @@
       "isBestSeller": false,
       "originalPrice": 1600,
       "images": [
-        "/public/images/oil.webp"
+        "/public/images/oil.jpeg"
       ],
       "weight": "200ml",
       "id": 11,
-      "image": "/public/images/oil.webp",
+      "image": "/public/images/oil.jpeg",
       "howToUse": "Apply on hair, leave 1-2 hours, then wash",
       "description": "Coconut-based hair oil for overall hair health.",
       "category": "Cosmetics Products"
@@ -291,7 +291,7 @@
       ],
       "weight": "50g",
       "id": 12,
-      "image": "",
+      "image": "/public/images/face-mask.jpeg",
       "howToUse": "Mix with rose water, milk or alovera gel, apply for 15-20 min and wash",
       "description": "Brightening face mask with herbal powders.",
       "category": "Cosmetics Products"
@@ -311,11 +311,11 @@
       "isBestSeller": false,
       "originalPrice": 200,
       "images": [
-        "/public/images/javvarisi-papadam.webp"
+        "/public/images/javvarisi-papadam.jpeg"
       ],
       "weight": "50g",
       "id": 13,
-      "image": "/public/images/javvarisi-papadam.webp",
+      "image": "/public/images/javvarisi-papadam.jpeg",
       "howToUse": "Fry in hot oil",
       "description": "Healthy snack made from jawwarisi.",
       "category": "Other Products"
@@ -346,11 +346,11 @@
       "isBestSeller": false,
       "originalPrice": 450,
       "images": [
-        "/public/images/health-mix.webp"
+        "/public/images/health-mix.jpeg"
       ],
       "weight": "250g",
       "id": 14,
-      "image": "/public/images/health-mix.webp",
+      "image": "/public/images/health-mix.jpeg",
       "howToUse": "Add sugar, coconut, salt with warm water and make balls",
       "description": "Nutritious health mix for snacks.",
       "category": "Other Products"
@@ -379,7 +379,7 @@
       ],
       "weight": "100g",
       "id": 15,
-      "image": "",
+      "image": "/public/images/kollu-kanji.jpeg",
       "howToUse": "Make as porridge to serve",
       "description": "Herbal mix to reduce weight and balance hormones.",
       "category": "Spicy Foods"
@@ -401,11 +401,11 @@
       "isBestSeller": false,
       "originalPrice": 1300,
       "images": [
-        "/public/images/abc-malt.webp"
+        "/public/images/abc-malt.jpeg"
       ],
       "weight": "50g",
       "id": 16,
-      "image": "/public/images/abc-malt.webp",
+      "image": "/public/images/abc-malt.jpeg",
       "howToUse": "Mix with hot milk and serve",
       "description": "Malt mix to increase hemoglobin and brighten skin.",
       "category": "Spicy Foods"
@@ -434,11 +434,11 @@
       "isBestSeller": false,
       "originalPrice": 150,
       "images": [
-        "/public/images/beef-masala.webp"
+        "/public/images/beef-masala.jpeg"
       ],
       "weight": "50g",
       "id": 17,
-      "image": "/public/images/beef-masala.webp",
+      "image": "/public/images/beef-masala.jpeg",
       "howToUse": "Add in beef curry",
       "description": "Spice mix to make beef curry.",
       "category": "Spicy Foods"
@@ -467,11 +467,11 @@
       "isBestSeller": false,
       "originalPrice": 140,
       "images": [
-        "/public/images/chicken-masala.webp"
+        "/public/images/chicken-masala.jpeg"
       ],
       "weight": "50g",
       "id": 18,
-      "image": "/public/images/chicken-masala.webp",
+      "image": "/public/images/chicken-masala.jpeg",
       "howToUse": "Add in chicken curry",
       "description": "Spice mix for chicken curry.",
       "category": "Spicy Foods"
@@ -498,11 +498,11 @@
       "isBestSeller": true,
       "originalPrice": 300,
       "images": [
-        "/public/images/biriyani-masala.webp"
+        "/public/images/biriyani-masala.jpeg"
       ],
       "weight": "60g",
       "id": 19,
-      "image": "/public/images/biriyani-masala.webp",
+      "image": "/public/images/biriyani-masala.jpeg",
       "howToUse": "Add in biriyani recipes",
       "description": "Biriyani spice mix.",
       "category": "Spicy Foods"
@@ -528,11 +528,11 @@
       "isBestSeller": false,
       "originalPrice": 440,
       "images": [
-        "/public/images/curry-powder.webp"
+        "/public/images/curry-powder.jpeg"
       ],
       "weight": "250g",
       "id": 20,
-      "image": "/public/images/curry-powder.webp",
+      "image": "/public/images/curry-powder.jpeg",
       "howToUse": "Add in curry recipes",
       "description": "Curry spice mix for multiple recipes.",
       "category": "Spicy Foods"
@@ -549,11 +549,11 @@
       "isBestSeller": false,
       "originalPrice": 400,
       "images": [
-        "/public/images/chilli-powder.webp"
+        "/public/images/chilli-powder.jpeg"
       ],
       "weight": "250g",
       "id": 21,
-      "image": "/public/images/chilli-powder.webp",
+      "image": "/public/images/chilli-powder.jpeg",
       "howToUse": "Add in recipes",
       "description": "100% pure chili powder.",
       "category": "Spicy Foods"
@@ -573,11 +573,11 @@
       "isBestSeller": false,
       "originalPrice": 350,
       "images": [
-        "/public/images/banana-mix.webp"
+        "/public/images/banana-mix.jpeg"
       ],
       "weight": "50g",
       "id": 22,
-      "image": "/public/images/banana-mix.webp",
+      "image": "/public/images/banana-mix.jpeg",
       "howToUse": "Add in hot milk, making pancake, muffin, and dosa",
       "description": "Banana and nut mix to increase weight and immunity.",
       "category": "Other Products"
@@ -602,7 +602,7 @@
       ],
       "weight": "50g",
       "id": 23,
-      "image": "",
+      "image": "/public/images/manjistha-soap.jpeg",
       "howToUse": "Gently apply on face and body, then wash",
       "description": "Soap to brighten face and body.",
       "category": "Other Products"
@@ -620,11 +620,11 @@
       "isBestSeller": false,
       "originalPrice": 660,
       "images": [
-        "/public/images/oil-pulling-mix.webp"
+        "/public/images/oil-pulling-mix.jpeg"
       ],
       "weight": "100ml",
       "id": 24,
-      "image": "/public/images/oil-pulling-mix.webp",
+      "image": "/public/images/oil-pulling-mix.jpeg",
       "howToUse": "Gargle in the morning",
       "description": "Oil mix for strong and white teeth.",
       "category": "Other Products"
@@ -641,11 +641,11 @@
       "isBestSeller": false,
       "originalPrice": 210,
       "images": [
-        "/public/images/pepper-powder.webp"
+        "/public/images/pepper-powder.jpeg"
       ],
       "weight": "50g",
       "id": 25,
-      "image": "/public/images/pepper-powder.webp",
+      "image": "/public/images/pepper-powder.jpeg",
       "howToUse": "Add in curry recipes",
       "description": "100% pure pepper powder.",
       "category": "Spicy Foods"
@@ -672,7 +672,7 @@
       ],
       "weight": "100g",
       "id": 26,
-      "image": "",
+      "image": "/public/images/grow-fast.jpeg",
       "howToUse": "Prepare porridge for babies after 6 months",
       "description": "Porridge mix for babies after 6 months.",
       "category": "Other Products"
