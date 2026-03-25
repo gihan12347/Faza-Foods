@@ -11,9 +11,18 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
+    <style>
+        .product-page .nav-list a[href*="#products"],
+        .product-page .nav-list a[href*="#best-sellers"],
+        .product-page .nav-list a[href*="#offers"] {
+        pointer-events: none;
+        opacity: 0.5;
+        cursor: not-allowed;
+        }
+    </style>
 </head>
 
-<body>
+<body class="product-page">
     <!-- Header -->
     <div id="header"></div>
 
