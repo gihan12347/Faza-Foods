@@ -533,7 +533,56 @@ function removeItem(id) {
 }
 
 function checkout() {
-    alert('Proceeding to checkout...');
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+    if (cart.length === 0) {
+        alert("Your cart is empty!");
+        return;
+    }
+
+    const WhatsAppNumber = "94764663270"; // 👈 change this
+
+    let msg = "New Order from Fasa Products*\n\n";
+    msg += "Items:*\n";
+
+    let total = 0;
+
+    cart.forEach((item, index) => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+
+        msg += `${index + 1}. ${item.name}\n`;
+        msg += `   Qty: ${item.quantity}\n`;
+        msg += `   Price: Rs. ${item.price.toLocaleString()}\n`;
+        msg += `   Total: Rs. ${itemTotal.toLocaleString()}\n\n`;
+    });
+
+    const shipping = total > 50000 ? 0 : 500;
+    const grandTotal = total + shipping;
+
+    msg += `Subtotal: Rs. ${total.toLocaleString()}\n`;
+    msg += `Shipping: ${shipping === 0 ? "Free" : "Rs. " + shipping.toLocaleString()}\n`;
+    msg += `Grand Total:* Rs. ${grandTotal.toLocaleString()}\n\n`;
+
+    msg += "🙏 Please confirm this order.";
+
+    const encodedMsg = encodeURIComponent(msg);
+    const url = `https://wa.me/${WhatsAppNumber}?text=${encodedMsg}`;
+
+    // 1. Close modal / cart panel
+    $('#cartSidepanel').removeClass('active');
+    $('#cartOverlay').removeClass('active');
+
+    // 2. Clear localStorage
+    localStorage.removeItem('cart');
+
+    // 3. Open WhatsApp
+    window.open(url, "_blank");
+
+    // 4. Refresh page (same URL)
+    setTimeout(() => {
+        window.location.href = window.location.href;
+    }, 500);
 }
 
 $(document).ready(function() {
