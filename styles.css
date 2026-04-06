@@ -288,7 +288,7 @@ ul {
 .product-image-container {
   position: relative;
   width: 100%;
-  padding-top: 75%;
+  padding-top: 100%;
   overflow: hidden;
   background-color: var(--bg-light);
 }
