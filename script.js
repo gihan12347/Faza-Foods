@@ -2,6 +2,10 @@ import { getReviews } from "./review.js";
 
 let products = [];
 
+/** WhatsApp checkout: digits only, country code + number (e.g. 94740633345 for 074 063 3345). */
+const WHATSAPP_ORDER_NUMBER = '94740633345';
+let lastWhatsAppOpenAt = 0;
+
 async function loadProducts() {
   try {
     const response = await fetch('/public/products.json');
@@ -149,11 +153,21 @@ function loadProductDetails() {
     renderProductDetails(product); 
 
     
-    // Render related products
+    const relatedGrid = document.getElementById('relatedProductsGrid');
     const relatedProducts = products
         .filter(p => p.id !== productId && p.category === product.category)
         .slice(0, 4);
-    renderProducts(relatedProducts, 'relatedProductsGrid');
+
+    if (relatedGrid) {
+        if (relatedProducts.length === 0) {
+            relatedGrid.setAttribute('data-empty', 'true');
+            relatedGrid.innerHTML =
+                '<p class="related-products__empty">No other products in this category yet. <a href="index.html#products">Browse the full catalog</a>.</p>';
+        } else {
+            relatedGrid.removeAttribute('data-empty');
+            renderProducts(relatedProducts, 'relatedProductsGrid');
+        }
+    }
 }
 
 function renderProductDetails(product) {
@@ -208,8 +222,8 @@ function renderProductDetails(product) {
                 </ul>
             </div>
             <div class="product-actions">
-                <button id="addToCart" class="btn btn-primary" data-id="${product.id}">Add to Cart</button>
-                <button class="btn btn-secondary">Buy Now</button>
+                <button type="button" id="addToCart" class="btn btn-primary" data-id="${product.id}">Add to Cart</button>
+                <button type="button" id="buyNowWhatsApp" class="btn btn-secondary" data-id="${product.id}" aria-label="Order this product on WhatsApp">Buy Now</button>
             </div>
         </div>
     `;
@@ -245,7 +259,8 @@ async function renderReviews(productId) {
         if (!container) return;
 
         if (reviews.length === 0) {
-            container.innerHTML = "<p>No reviews yet. Be the first to review this product!</p>";
+            container.innerHTML =
+                '<div class="reviews-empty" role="status"><p>No reviews yet. Be the first to review this product—scroll down to share your experience.</p></div>';
             
         } else {
             // Create carousel structure
@@ -286,7 +301,7 @@ async function renderReviews(productId) {
             const leftArrow = container.querySelector('.carousel-arrow-left');
             const rightArrow = container.querySelector('.carousel-arrow-right');
             
-            const scrollAmount = 350; // Adjust based on your card width + gap
+            const scrollAmount = 380;
 
             leftArrow.addEventListener('click', () => {
                 track.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
@@ -463,7 +478,9 @@ function renderCart() {
     if (cart.length === 0) {
         $cartItems.html(`
             <div class="empty-cart">
-                <div class="empty-cart-icon">🛒</div>
+                <div class="empty-cart-icon" aria-hidden="true">
+                    <img src="/public/images/cart.png" alt="" class="empty-cart-icon-image">
+                </div>
                 <p>Your cart is empty</p>
                 <button onclick="window.location.href='index.html'">Continue Shopping</button>
             </div>
@@ -532,96 +549,133 @@ function removeItem(id) {
      updateCartBadge();
 }
 
+function whatsappOrderDigits() {
+    return String(WHATSAPP_ORDER_NUMBER).replace(/\D/g, '');
+}
+
+function buildWhatsAppOrderText(items) {
+    const lines = [];
+    lines.push('*New order — Fasa Products*');
+    lines.push('');
+    lines.push('*Items:*');
+    let subtotal = 0;
+    items.forEach((item, index) => {
+        const price = Number(item.price);
+        const qty = Math.max(1, Number(item.quantity) || 1);
+        const lineTotal = price * qty;
+        subtotal += lineTotal;
+        lines.push(`${index + 1}. *${item.name}*`);
+        lines.push(`   Qty: ${qty} × ${formatPrice(price)} = *${formatPrice(lineTotal)}*`);
+    });
+    lines.push('');
+    const shipping = subtotal > 50000 ? 0 : 500;
+    const grandTotal = subtotal + shipping;
+    lines.push(`Subtotal: *${formatPrice(subtotal)}*`);
+    lines.push(`Shipping: ${shipping === 0 ? 'Free' : formatPrice(shipping)}`);
+    lines.push(`*Total: ${formatPrice(grandTotal)}*`);
+    lines.push('');
+    lines.push('Please confirm this order. Thank you!');
+    return lines.join('\n');
+}
+
+function openWhatsAppWithOrder(items, options = {}) {
+    const { closeCart = false, clearCart = false } = options;
+    if (!items.length) return;
+    const now = Date.now();
+    if (now - lastWhatsAppOpenAt < 1200) return;
+    lastWhatsAppOpenAt = now;
+
+    const digits = whatsappOrderDigits();
+    if (!digits) {
+        alert('WhatsApp number is not configured.');
+        return;
+    }
+
+    const text = buildWhatsAppOrderText(items);
+    const url = `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+
+    if (closeCart) {
+        $('#cartSidepanel').removeClass('active');
+        $('#cartOverlay').removeClass('active');
+    }
+
+    const win = window.open(url, '_blank', 'noopener,noreferrer');
+    if (!win) {
+        window.location.href = url;
+    }
+
+    if (clearCart) {
+        localStorage.removeItem('cart');
+        updateCartBadge();
+    }
+    renderCart();
+}
+
 function checkout() {
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
 
     if (cart.length === 0) {
-        alert("Your cart is empty!");
+        alert('Your cart is empty!');
         return;
     }
 
-    const WhatsAppNumber = "94764663270"; // 👈 change this
-
-    let msg = "New Order from Fasa Products*\n\n";
-    msg += "Items:*\n";
-
-    let total = 0;
-
-    cart.forEach((item, index) => {
-        const itemTotal = item.price * item.quantity;
-        total += itemTotal;
-
-        msg += `${index + 1}. ${item.name}\n`;
-        msg += `   Qty: ${item.quantity}\n`;
-        msg += `   Price: Rs. ${item.price.toLocaleString()}\n`;
-        msg += `   Total: Rs. ${itemTotal.toLocaleString()}\n\n`;
-    });
-
-    const shipping = total > 50000 ? 0 : 500;
-    const grandTotal = total + shipping;
-
-    msg += `Subtotal: Rs. ${total.toLocaleString()}\n`;
-    msg += `Shipping: ${shipping === 0 ? "Free" : "Rs. " + shipping.toLocaleString()}\n`;
-    msg += `Grand Total:* Rs. ${grandTotal.toLocaleString()}\n\n`;
-
-    msg += "🙏 Please confirm this order.";
-
-    const encodedMsg = encodeURIComponent(msg);
-    const url = `https://wa.me/${WhatsAppNumber}?text=${encodedMsg}`;
-
-    // 1. Close modal / cart panel
-    $('#cartSidepanel').removeClass('active');
-    $('#cartOverlay').removeClass('active');
-
-    // 2. Clear localStorage
-    localStorage.removeItem('cart');
-
-    // 3. Open WhatsApp
-    window.open(url, "_blank");
-
-    // 4. Refresh page (same URL)
-    setTimeout(() => {
-        window.location.href = window.location.href;
-    }, 500);
+    openWhatsAppWithOrder(cart, { closeCart: true, clearCart: true });
 }
 
 $(document).ready(function() {
 
-    $(document).on('click', '#addToCart', function() {
+    $(document).off('click', '#addToCart').on('click', '#addToCart', function() {
         const id = $(this).data('id');
         const product = products.find(p => p.id === id);
         addToCart(product);
     });
 
-    $(document).on('click', '#cartToggle', function() {
+    $(document).off('click', '#cartToggle').on('click', '#cartToggle', function() {
         console.log('Cart icon clicked');
         renderCart();
         $('#cartSidepanel').addClass('active');
         $('#cartOverlay').addClass('active');
     });
 
-    $(document).on('click', '#cartClose', function() {
+    $(document).off('click', '#cartClose').on('click', '#cartClose', function() {
         $('#cartSidepanel').removeClass('active');
         $('#cartOverlay').removeClass('active');
     });
 
-    $(document).on('click', '#cartOverlay', function() {
+    $(document).off('click', '#cartOverlay').on('click', '#cartOverlay', function() {
         $('#cartSidepanel').removeClass('active');
         $('#cartOverlay').removeClass('active');
     });
 
-    $(document).on('click', '.quantity-btn', function() {
+    $(document).off('click', '.quantity-btn').on('click', '.quantity-btn', function() {
         const id = Number($(this).data('id'));
         const change = Number($(this).data('change'));
         updateQuantity(id, change);
     });
 
-    $(document).on('click', '.remove-btn', function() {
+    $(document).off('click', '.remove-btn').on('click', '.remove-btn', function() {
         const id = Number($(this).data('id'));
         removeItem(id);
     });
 
-    $(document).on('click', '#checkoutBtn', function() {
+    $(document).off('click', '#checkoutBtn').on('click', '#checkoutBtn', function() {
         checkout();
+    });
+
+    $(document).off('click', '#buyNowWhatsApp').on('click', '#buyNowWhatsApp', function() {
+        const id = Number($(this).data('id'));
+        const product = products.find((p) => p.id === id);
+        if (!product) return;
+        openWhatsAppWithOrder(
+            [
+                {
+                    id: product.id,
+                    name: product.name,
+                    price: Number(product.price),
+                    quantity: 1
+                }
+            ],
+            { closeCart: false, clearCart: false }
+        );
     });
 });

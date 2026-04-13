@@ -5,15 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Browse our amazing collection of products. Find best sellers, special offers, and discover your perfect match.">
     <title>Fasa Products - Your Product Catalog</title>
+    <link rel="icon" type="image/jpeg" href="/public/images/fasa-logo.jpeg">
+    <link rel="apple-touch-icon" href="/public/images/fasa-logo.jpeg">
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="home-page">
     <!-- Header -->
     <div id="header"></div>
 
+    <main class="home-main">
     <!-- Hero Section -->
     <section class="hero">
         <div class="container">
@@ -69,13 +72,16 @@
             </div>
         </div>
     </section>
+    </main>
 
     <!-- Footer -->
     <footer class="footer" id="contact">
-        <div class="container">
+        <div class="container footer-container">
             <div class="footer-content">
-                <div class="footer-section">
-                    <h3>Fasa Products</h3>
+                <div class="footer-section footer-section--brand">
+                    <a href="index.html" class="footer-logo-link">
+                        <img src="/public/images/fasa-logo.jpeg" alt="Fasa Products" class="footer-logo" width="200" height="80">
+                    </a>
                     <p>Your trusted source for quality products. Browse our catalog and find exactly what you need.</p>
                 </div>
                 <div class="footer-section">
@@ -124,12 +130,15 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2024 Fasa Products. All rights reserved.</p>
+                <p>&copy; <span id="year"></span> DTec Solution private LTD. All rights reserved.</p>
             </div>
         </div>
     </footer>
     <script src="jquery.js"></script>
     <script src="include.js"></script>
+    <script> 
+        document.getElementById("year").textContent = new Date().getFullYear(); 
+    </script>
     <script>
         headerReady.then(() => {
             setActiveNavById('nav-home');

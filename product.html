@@ -6,112 +6,118 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Product details and customer reviews">
     <title>Product Details - Fasa Products</title>
+    <link rel="icon" type="image/jpeg" href="/public/images/fasa-logo.jpeg">
+    <link rel="apple-touch-icon" href="/public/images/fasa-logo.jpeg">
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
-    <style>
-        .product-page .nav-list a[href*="#products"],
-        .product-page .nav-list a[href*="#best-sellers"],
-        .product-page .nav-list a[href*="#offers"] {
-        pointer-events: none;
-        opacity: 0.5;
-        cursor: not-allowed;
-        }
-    </style>
 </head>
 
 <body class="product-page">
-    <!-- Header -->
     <div id="header"></div>
 
-    <!-- Product Details Section -->
-    <section class="product-details">
-        <div class="container">
-            <div class="product-details-content" id="productDetailsContent">
-                <!-- Product details will be dynamically loaded here -->
-            </div>
-        </div>
-    </section>
-
-    <!-- Customer Reviews Section -->
-    <section class="reviews-section">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Customer Reviews</h2>
-                <p class="section-subtitle">What our customers are saying</p>
-            </div>
-            <div class="reviews-container" id="reviewsContainer">
-                <!-- Reviews will be dynamically loaded here -->
-            </div>
-        </div>
-    </section>
-
-    <!-- Related Products Section -->
-    <section class="section related-products">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Related Products</h2>
-                <p class="section-subtitle">You might also like</p>
-            </div>
-            <div class="products-grid" id="relatedProductsGrid">
-                <!-- Related products will be dynamically loaded here -->
-            </div>
-        </div>
-    </section>
-
-    <section class="section review-form-section">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Submit Your Review</h2>
-                <p class="section-subtitle">We value your feedback</p>
-            </div>
-            <div class="success-message" id="successMessage">
-                ✓ Thank you! Your review has been submitted successfully.
-            </div>
-            <div class="success-message" id="failMessage">
-                ✗ Your review submission failed. Please try again.
-            </div>
-            <form id="reviewForm">
-                <div class="form-group">
-                    <label for="name">Your Name *</label>
-                    <input type="text" id="name" name="name" placeholder="Enter your name" required>
-                </div>
-
-                <div class="rating-group">
-                    <label>Rating *</label>
-                    <div class="star-rating" id="starRating">
-                        <span class="star" data-rating="1">★</span>
-                        <span class="star" data-rating="2">★</span>
-                        <span class="star" data-rating="3">★</span>
-                        <span class="star" data-rating="4">★</span>
-                        <span class="star" data-rating="5">★</span>
+    <main class="product-page-main" id="main-content">
+        <!-- Product details -->
+        <section class="product-details product-details--page" aria-label="Product details">
+            <div class="container">
+                <div class="product-details__shell">
+                    <div class="product-details-content" id="productDetailsContent">
+                        <!-- Product details will be dynamically loaded here -->
                     </div>
-                    <div class="rating-text" id="ratingText">Select your rating</div>
-                    <input type="hidden" id="rating" name="rating" required>
+                </div>
+            </div>
+        </section>
+
+        <!-- Customer reviews -->
+        <section class="section reviews-section" id="customer-reviews" aria-labelledby="reviews-section-title">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title" id="reviews-section-title">Customer Reviews</h2>
+                    <p class="section-subtitle">What our customers are saying—use the arrows or swipe sideways to browse.</p>
+                </div>
+                <div class="reviews-container" id="reviewsContainer">
+                    <!-- Reviews will be dynamically loaded here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Related products -->
+        <section class="section related-products" id="related-products" aria-labelledby="related-products-title">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title" id="related-products-title">Related Products</h2>
+                    <p class="section-subtitle">More from this category—tap a card to view details.</p>
+                </div>
+                <div class="products-grid" id="relatedProductsGrid">
+                    <!-- Related products will be dynamically loaded here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Submit review -->
+        <section class="section review-form-section" aria-labelledby="review-form-title">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title" id="review-form-title">Submit Your Review</h2>
+                    <p class="section-subtitle">We value your feedback. Your review helps other shoppers choose with confidence.</p>
                 </div>
 
-                <div class="form-group">
-                    <label for="comment">Your Review *</label>
-                    <textarea id="comment" name="comment" placeholder="Share your experience with us..." required
-                        maxlength="500"></textarea>
-                    <div class="char-count">
-                        <span id="charCount">0</span> / 500 characters
+                <div class="review-feedback" aria-live="polite">
+                    <div class="success-message" id="successMessage">
+                        ✓ Thank you! Your review has been submitted successfully.
+                    </div>
+                    <div class="success-message" id="failMessage">
+                        ✗ Your review submission failed. Please try again.
                     </div>
                 </div>
 
-                <button type="submit">Submit Review</button>
-            </form>
-        </div>
-    </section>
+                <div class="review-form-panel">
+                    <form id="reviewForm" class="review-form">
+                        <p class="review-form-hint"><span aria-hidden="true">*</span> Required fields</p>
 
-    <!-- Footer -->
+                        <div class="form-group review-form__group">
+                            <label for="name">Your name</label>
+                            <input type="text" id="name" name="name" placeholder="e.g. Nimal Perera" required autocomplete="name">
+                        </div>
+
+                        <div class="rating-group review-form__rating">
+                            <span class="rating-group__label" id="ratingGroupLabel">Rating</span>
+                            <div class="star-rating" id="starRating" role="group" aria-labelledby="ratingGroupLabel">
+                                <span class="star" data-rating="1" role="button" tabindex="0" aria-label="1 star">★</span>
+                                <span class="star" data-rating="2" role="button" tabindex="0" aria-label="2 stars">★</span>
+                                <span class="star" data-rating="3" role="button" tabindex="0" aria-label="3 stars">★</span>
+                                <span class="star" data-rating="4" role="button" tabindex="0" aria-label="4 stars">★</span>
+                                <span class="star" data-rating="5" role="button" tabindex="0" aria-label="5 stars">★</span>
+                            </div>
+                            <div class="rating-text" id="ratingText">Select your rating</div>
+                            <input type="hidden" id="rating" name="rating" required>
+                        </div>
+
+                        <div class="form-group review-form__group">
+                            <label for="comment">Your review</label>
+                            <textarea id="comment" name="comment" placeholder="What did you like? How was quality, taste, or packaging?" required
+                                maxlength="500" rows="5"></textarea>
+                            <div class="char-count" aria-live="polite">
+                                <span id="charCount">0</span> / 500 characters
+                            </div>
+                        </div>
+
+                        <button type="submit" class="review-submit-btn">Submit review</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
     <footer class="footer" id="contact">
-        <div class="container">
+        <div class="container footer-container">
             <div class="footer-content">
-                <div class="footer-section">
-                    <h3>Fasa Products</h3>
+                <div class="footer-section footer-section--brand">
+                    <a href="index.html" class="footer-logo-link">
+                        <img src="/public/images/fasa-logo.jpeg" alt="Fasa Products" class="footer-logo" width="200" height="80">
+                    </a>
                     <p>Your trusted source for quality products. Browse our catalog and find exactly what you need.</p>
                 </div>
                 <div class="footer-section">
@@ -126,26 +132,48 @@
                 <div class="footer-section">
                     <h4>Contact</h4>
                     <ul>
-                        <li>Email: info@fasaproducts.com</li>
-                        <li>Phone: +1 (555) 123-4567</li>
-                        <li>Address: 123 Product Street, City, State 12345</li>
+                        <li>Phone: 0740633345 | 0772923775</li>
+                        <li>Address: Fasa Products, 193/2,Pillawa, Kumballanga, Ibbagamuwa.</li>
                     </ul>
                 </div>
                 <div class="footer-section">
                     <h4>Follow Us</h4>
                     <div class="social-links">
-                        <a href="https://www.instagram.com/fasa_products?igsh=MWUxa210MDN6Z2R6dg==" aria-label="Instagram">Instagram</a>
-                        <a href="https://www.tiktok.com/@fasa.products?_r=1&_t=ZS-95JKiLD05qu" aria-label="TikTok">TikTok</a>
-                        <a href="https://www.youtube.com/@mykitchenbyfasa2487" aria-label="YouTube">YouTube</a>
+                        <a href="https://www.facebook.com/profile.php?id=61577961830404" aria-label="Facebook">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+                            </svg>
+                        </a>
+                        <a href="https://www.instagram.com/fasa_products?igsh=MWUxa210MDN6Z2R6dg==" aria-label="Instagram">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                            </svg>
+                        </a>
+                        <a href="https://www.tiktok.com/@fasa.products?_r=1&_t=ZS-95JKiLD05qu" aria-label="TikTok">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.75a4.85 4.85 0 0 1-1.01-.06z"/>
+                            </svg>
+                        </a>
+                        <a href="https://www.youtube.com/@mykitchenbyfasa2487" aria-label="YouTube">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/>
+                                <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="white"/>
+                            </svg>
+                        </a>
                     </div>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2024 Fasa Products. All rights reserved.</p>
+                <p>&copy; <span id="year"></span> DTec Solution private LTD. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
+    <script>
+        document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
     <script src="jquery.js"></script>
     <script type="module" src="review.js"></script>
     <script src="include.js"></script>

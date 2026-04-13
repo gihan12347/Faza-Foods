@@ -140,6 +140,13 @@ document.addEventListener("DOMContentLoaded", () => {
       ratingText.textContent = ratingLabels[selectedRating];
     });
 
+    star.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        this.click();
+      }
+    });
+
     star.addEventListener("mouseenter", function () {
       const hoverRating = parseInt(this.dataset.rating);
       updateStars(stars, hoverRating, true);
