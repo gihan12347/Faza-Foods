@@ -377,6 +377,30 @@ function initSmoothScrolling() {
     });
 }
 
+function initScrollToTopButton() {
+    const scrollButton = document.getElementById('scrollToTopBtn');
+    if (!scrollButton) return;
+
+    const threshold = 300;
+    const toggleScrollButton = () => {
+        if (window.scrollY > threshold) {
+            scrollButton.classList.add('is-visible');
+        } else {
+            scrollButton.classList.remove('is-visible');
+        }
+    };
+
+    window.addEventListener('scroll', toggleScrollButton, { passive: true });
+    scrollButton.addEventListener('click', () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+
+    toggleScrollButton();
+}
+
 // ============================================
 // Initialize Page
 // ============================================
@@ -392,6 +416,9 @@ async function init() {
     
     // Initialize smooth scrolling
     initSmoothScrolling();
+
+    // Initialize scroll-to-top button
+    initScrollToTopButton();
     
     // Check if we're on the product details page
     if (window.location.pathname.endsWith('/product')) {

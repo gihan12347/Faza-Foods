@@ -2061,6 +2061,46 @@ body.product-page .breadcrumb-list {
   margin-bottom: 2rem;
 }
 
+.scroll-to-top {
+  position: fixed;
+  right: clamp(0.95rem, 2.5vw, 1.5rem);
+  bottom: clamp(1rem, 2.8vw, 1.75rem);
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: linear-gradient(145deg, #4e8f2e 0%, #2c6a1c 100%);
+  box-shadow: 0 10px 24px rgba(29, 77, 38, 0.28);
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease, box-shadow 0.2s ease;
+  z-index: 1001;
+}
+
+.scroll-to-top:hover {
+  transform: translateY(0);
+  box-shadow: 0 12px 26px rgba(29, 77, 38, 0.35);
+}
+
+.scroll-to-top:focus-visible {
+  outline: 2px solid #d3f58e;
+  outline-offset: 2px;
+}
+
+.scroll-to-top.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
 /* ============================================
    add to cart Classes
    ============================================ */
