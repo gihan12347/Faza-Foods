@@ -676,6 +676,106 @@
       "howToUse": "Prepare porridge for babies after 6 months",
       "description": "Porridge mix for babies after 6 months.",
       "category": "Baby & Kids Products"
+    },
+    {
+      "ingredients": [
+        "Black Seeds",
+        "Fenugreek",
+        "Omam"
+      ],
+      "useFor": [
+        "To cure digestive problems."
+      ],
+      "price": 350,
+      "name": "Digestive Podi",
+      "isBestSeller": false,
+      "originalPrice": 350,
+      "images": [
+        "/public/images/digestive-podi.jpeg"
+      ],
+      "weight": "50g",
+      "id": 27,
+      "image": "/public/images/digestive-podi.jpeg",
+      "howToUse": "Mix with hot water",
+      "description": "",
+      "category": "Special Homemade Items"
+    },
+    {
+      "ingredients": [
+        "100% Pure Butter",
+        "Morning Leaves"
+      ],
+      "useFor": [
+        "To make sweets and dishes."
+      ],
+      "price": 650,
+      "name": "Ghee",
+      "isBestSeller": false,
+      "originalPrice": 650,
+      "images": [
+        "/public/images/ghee.jpeg"
+      ],
+      "weight": "50g",
+      "id": 28,
+      "image": "/public/images/ghee.jpeg",
+      "howToUse": "Add in your many kind of recipes",
+      "description": "",
+      "category": "Special Homemade Items"
+    },
+    {
+      "ingredients": [
+        "Chicken",
+        "Sesame Oil",
+        "Garlic",
+        "Curry Leaves",
+        "Spices",
+        "Salt"
+      ],
+      "useFor": [
+        "Can eat as a sidedish."
+      ],
+      "price": 800,
+      "name": "Chicken Pickle",
+      "isBestSeller": false,
+      "originalPrice": 800,
+      "images": [
+        "/public/images/chicken-pickle.jpeg"
+      ],
+      "weight": "",
+      "id": 29,
+      "image": "/public/images/chicken-pickle.jpeg",
+      "howToUse": "Can have with rice,rotting,bread etc",
+      "description": "",
+      "category": "Special Homemade Items"
+    },
+    {
+      "ingredients": [
+        "Coriander",
+        "Sweet Cumin",
+        "Cumin",
+        "Chilli",
+        "Turmeric",
+        "Rice",
+        "Pepper",
+        "Curry Leaves",
+        "Garcinia"
+      ],
+      "useFor": [
+        "To make fish curry."
+      ],
+      "price": 150,
+      "name": "Fish Masala",
+      "isBestSeller": false,
+      "originalPrice": 150,
+      "images": [
+        "/public/images/fish-masala.jpeg"
+      ],
+      "weight": "50g",
+      "id": 30,
+      "image": "/public/images/fish-masala.jpeg",
+      "howToUse": "Add in your fish curry recipe.",
+      "description": "",
+      "category": "Masalas & Cooking Essentials"
     }
   ]
 }
