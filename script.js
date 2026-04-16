@@ -696,7 +696,6 @@ function ensureBuyNowPopup() {
                     <label class="buy-now-popup__group">
                         <span>Delivery Type</span>
                         <select id="buyNowDeliveryType" required>
-                            <option value="">Select delivery type</option>
                             <option value="Courier">Courier</option>
                             <option value="Cash on delivery">Cash on delivery</option>
                         </select>
@@ -711,8 +710,7 @@ function ensureBuyNowPopup() {
                     </label>
                     <label class="buy-now-popup__group">
                         <span>District</span>
-                        <select id="buyNowDistrict" required>
-                            <option value="">Select district</option>
+                        <select id="buyNowDistrict" required>    
                             ${districtOptions}
                         </select>
                     </label>
