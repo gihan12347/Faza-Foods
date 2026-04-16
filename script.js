@@ -5,6 +5,34 @@ let products = [];
 /** WhatsApp checkout: digits only, country code + number (e.g. 94740633345 for 074 063 3345). */
 const WHATSAPP_ORDER_NUMBER = '94740633345';
 let lastWhatsAppOpenAt = 0;
+let wasDeliveryDetailsComplete = false;
+
+const SPECIAL_RATE_DISTRICTS = new Set([
+    'ampara',
+    'anuradhapura',
+    'batticaloa',
+    'trincomalee',
+    'jaffna'
+]);
+
+const SHIPPING_RATES = {
+    normal: {
+        courier: [500, 650, 800],
+        cashOnDelivery: [550, 700, 850]
+    },
+    special: {
+        courier: [550, 700, 850],
+        cashOnDelivery: [600, 750, 900]
+    }
+};
+
+const SRI_LANKA_DISTRICTS = [
+    'Ampara', 'Anuradhapura', 'Badulla', 'Batticaloa', 'Colombo', 'Galle',
+    'Gampaha', 'Hambantota', 'Jaffna', 'Kalutara', 'Kandy', 'Kegalle',
+    'Kilinochchi', 'Kurunegala', 'Mannar', 'Matale', 'Matara', 'Monaragala',
+    'Mullaitivu', 'Nuwara Eliya', 'Polonnaruwa', 'Puttalam', 'Ratnapura',
+    'Trincomalee', 'Vavuniya'
+];
 
 async function loadProducts() {
   try {
@@ -469,6 +497,7 @@ function addToCart(product) {
             name: product.name,
             price: product.price,
             image: product.images[0],
+            weight: product.weight || '',
             quantity: 1
         });
     }
@@ -501,6 +530,7 @@ function renderCart() {
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
     const $cartItems = $('#cartItems');
     const $cartSummary = $('#cartSummary');
+    const $cartTotals = $('#cartTotals');
     
     if (cart.length === 0) {
         $cartItems.html(`
@@ -512,6 +542,8 @@ function renderCart() {
                 <button onclick="window.location.href='index.html'">Continue Shopping</button>
             </div>
         `);
+        clearDeliveryDetails();
+        $cartTotals.hide();
         $cartSummary.hide();
         return;
     }
@@ -538,18 +570,280 @@ function renderCart() {
     `).join('');
     
     $cartItems.html(html);
-    updateSummary(cart);
     $cartSummary.show();
+    refreshCartSummaryState(cart);
 }
 
-function updateSummary(cart) {
+function normalizeDistrictName(district) {
+    const normalized = String(district || '').trim().toLowerCase();
+    if (normalized === 'jaffa') return 'jaffna';
+    if (normalized === 'batticallo') return 'batticaloa';
+    if (normalized === 'amapara') return 'ampara';
+    return normalized;
+}
+
+function normalizeDeliveryType(deliveryType) {
+    const normalized = String(deliveryType || '').trim().toLowerCase();
+    return normalized.includes('cash') ? 'cashOnDelivery' : 'courier';
+}
+
+function parseWeightToKg(weightValue) {
+    if (typeof weightValue !== 'string') return null;
+    const normalized = weightValue.trim().toLowerCase();
+    const match = normalized.match(/^(\d+(?:\.\d+)?)\s*(kg|g)$/);
+    if (!match) return null;
+
+    const value = Number(match[1]);
+    const unit = match[2];
+    if (!Number.isFinite(value) || value <= 0) return null;
+
+    return unit === 'kg' ? value : value / 1000;
+}
+
+function getProductWeightKgById(productId) {
+    const product = products.find((p) => Number(p.id) === Number(productId));
+    if (!product) return null;
+    return parseWeightToKg(product.weight);
+}
+
+function getCartWeightKg(items) {
+    const totalWeight = items.reduce((sum, item) => {
+        const quantity = Math.max(1, Number(item.quantity) || 1);
+        const itemWeightKg =
+            parseWeightToKg(item.weight) ??
+            getProductWeightKgById(item.id) ??
+            1;
+        return sum + (itemWeightKg * quantity);
+    }, 0);
+
+    return Math.max(totalWeight, 0.01);
+}
+
+function getShippingFee(items, deliveryDetails) {
+    if (!deliveryDetails || !hasDeliveryDetails(deliveryDetails)) {
+        return 0;
+    }
+
+    const normalizedDistrict = normalizeDistrictName(deliveryDetails.district);
+    const districtGroup = SPECIAL_RATE_DISTRICTS.has(normalizedDistrict) ? 'special' : 'normal';
+    const deliveryTypeKey = normalizeDeliveryType(deliveryDetails.deliveryType);
+    const rates = SHIPPING_RATES[districtGroup][deliveryTypeKey] || SHIPPING_RATES[districtGroup].courier;
+
+    const totalWeightKg = getCartWeightKg(items);
+    const billableKg = Math.max(1, Math.ceil(totalWeightKg));
+
+    if (billableKg <= 3) {
+        return rates[billableKg - 1];
+    }
+
+    const perExtraKg = rates[2] - rates[1];
+    return rates[2] + ((billableKg - 3) * perExtraKg);
+}
+
+function updateSummary(cart, deliveryDetails = getDeliveryDetails()) {
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const shipping = subtotal > 50000 ? 0 : 500;
+    const shipping = getShippingFee(cart, deliveryDetails);
     const total = subtotal + shipping;
 
     $('#subtotal').text('Rs. ' + subtotal.toLocaleString());
     $('#shipping').text(shipping === 0 ? 'Free' : 'Rs. ' + shipping.toLocaleString());
     $('#total').text('Rs. ' + total.toLocaleString());
+}
+
+function getDeliveryDetails() {
+    return {
+        deliveryType: String($('#deliveryType').val() || '').trim(),
+        addressLine1: String($('#deliveryAddress1').val() || '').trim(),
+        addressLine2: String($('#deliveryAddress2').val() || '').trim(),
+        district: String($('#deliveryDistrict').val() || '').trim()
+    };
+}
+
+function getBuyNowDeliveryDetails() {
+    return {
+        deliveryType: String($('#buyNowDeliveryType').val() || '').trim(),
+        addressLine1: String($('#buyNowAddress1').val() || '').trim(),
+        addressLine2: String($('#buyNowAddress2').val() || '').trim(),
+        district: String($('#buyNowDistrict').val() || '').trim()
+    };
+}
+
+function hasDeliveryDetails(details = getDeliveryDetails()) {
+    return Boolean(
+        details.deliveryType &&
+        details.addressLine1 &&
+        details.addressLine2 &&
+        details.district
+    );
+}
+
+function ensureBuyNowPopup() {
+    if (document.getElementById('buyNowDeliveryPopup')) return;
+    const districtOptions = SRI_LANKA_DISTRICTS
+        .map((district) => `<option value="${district}">${district}</option>`)
+        .join('');
+
+    const modalMarkup = `
+        <div class="buy-now-popup hidden" id="buyNowDeliveryPopup" role="dialog" aria-modal="true" aria-labelledby="buyNowPopupTitle">
+            <div class="buy-now-popup__backdrop" id="buyNowPopupBackdrop"></div>
+            <div class="buy-now-popup__panel" role="document">
+                <div class="buy-now-popup__header">
+                    <h3 id="buyNowPopupTitle">Delivery Details</h3>
+                    <button type="button" class="buy-now-popup__close" id="buyNowPopupClose" aria-label="Close delivery details popup">&times;</button>
+                </div>
+                <p class="buy-now-popup__hint">Enter delivery details to calculate shipping and total price.</p>
+                <form id="buyNowDeliveryForm" class="buy-now-popup__form">
+                    <label class="buy-now-popup__group">
+                        <span>Delivery Type</span>
+                        <select id="buyNowDeliveryType" required>
+                            <option value="">Select delivery type</option>
+                            <option value="Courier">Courier</option>
+                            <option value="Cash on delivery">Cash on delivery</option>
+                        </select>
+                    </label>
+                    <label class="buy-now-popup__group">
+                        <span>Address Line 1</span>
+                        <input type="text" id="buyNowAddress1" placeholder="House no, street" required>
+                    </label>
+                    <label class="buy-now-popup__group">
+                        <span>Address Line 2</span>
+                        <input type="text" id="buyNowAddress2" placeholder="Area / city" required>
+                    </label>
+                    <label class="buy-now-popup__group">
+                        <span>District</span>
+                        <select id="buyNowDistrict" required>
+                            <option value="">Select district</option>
+                            ${districtOptions}
+                        </select>
+                    </label>
+                    <div class="buy-now-popup__price-summary hidden" id="buyNowPriceSummary">
+                        <div class="buy-now-popup__price-row">
+                            <span>Subtotal</span>
+                            <span id="buyNowSubtotal">Rs. 0</span>
+                        </div>
+                        <div class="buy-now-popup__price-row">
+                            <span>Shipping</span>
+                            <span id="buyNowShipping">Rs. 0</span>
+                        </div>
+                        <div class="buy-now-popup__price-row buy-now-popup__price-row--total">
+                            <span>Total</span>
+                            <span id="buyNowTotal">Rs. 0</span>
+                        </div>
+                    </div>
+                    <div class="buy-now-popup__actions">
+                        <button type="button" class="buy-now-popup__btn buy-now-popup__btn--ghost" id="buyNowPopupCancel">Cancel</button>
+                        <button type="submit" class="buy-now-popup__btn buy-now-popup__btn--primary">Send to WhatsApp</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalMarkup);
+}
+
+function openBuyNowPopup(product) {
+    if (!product) return;
+    ensureBuyNowPopup();
+
+    const popup = document.getElementById('buyNowDeliveryPopup');
+    if (!popup) return;
+
+    popup.classList.remove('hidden');
+    document.body.classList.add('buy-now-popup-open');
+    popup.dataset.productId = String(product.id);
+
+    const firstInput = document.getElementById('buyNowDeliveryType');
+    firstInput?.focus();
+    renderBuyNowPricePreview();
+}
+
+function closeBuyNowPopup() {
+    const popup = document.getElementById('buyNowDeliveryPopup');
+    if (!popup) return;
+
+    popup.classList.add('hidden');
+    document.body.classList.remove('buy-now-popup-open');
+    popup.dataset.productId = '';
+
+    const form = document.getElementById('buyNowDeliveryForm');
+    form?.reset();
+    const summary = document.getElementById('buyNowPriceSummary');
+    summary?.classList.add('hidden');
+}
+
+function getBuyNowItemFromPopup() {
+    const popup = document.getElementById('buyNowDeliveryPopup');
+    if (!popup) return null;
+
+    const productId = Number(popup.dataset.productId);
+    if (!productId) return null;
+
+    const product = products.find((p) => Number(p.id) === productId);
+    if (!product) return null;
+
+    return {
+        id: product.id,
+        name: product.name,
+        price: Number(product.price),
+        weight: product.weight || '',
+        quantity: 1
+    };
+}
+
+function renderBuyNowPricePreview() {
+    const summary = document.getElementById('buyNowPriceSummary');
+    if (!summary) return;
+
+    const item = getBuyNowItemFromPopup();
+    const deliveryDetails = getBuyNowDeliveryDetails();
+
+    if (!item || !hasDeliveryDetails(deliveryDetails)) {
+        summary.classList.add('hidden');
+        return;
+    }
+
+    const items = [item];
+    const subtotal = items.reduce((sum, cartItem) => sum + (Number(cartItem.price) * (Number(cartItem.quantity) || 1)), 0);
+    const shipping = getShippingFee(items, deliveryDetails);
+    const total = subtotal + shipping;
+
+    $('#buyNowSubtotal').text(formatPrice(subtotal));
+    $('#buyNowShipping').text(formatPrice(shipping));
+    $('#buyNowTotal').text(formatPrice(total));
+    summary.classList.remove('hidden');
+}
+
+function clearDeliveryDetails() {
+    $('#deliveryType').val('');
+    $('#deliveryAddress1').val('');
+    $('#deliveryAddress2').val('');
+    $('#deliveryDistrict').val('');
+    wasDeliveryDetailsComplete = false;
+}
+
+function refreshCartSummaryState(cart) {
+    const details = getDeliveryDetails();
+    const isComplete = hasDeliveryDetails(details);
+    const $cartTotals = $('#cartTotals');
+    const cartSummaryEl = $('#cartSummary').get(0);
+
+    if (isComplete) {
+        updateSummary(cart, details);
+        $cartTotals.show();
+        if (!wasDeliveryDetailsComplete && cartSummaryEl) {
+            requestAnimationFrame(() => {
+                cartSummaryEl.scrollTo({
+                    top: cartSummaryEl.scrollHeight,
+                    behavior: 'smooth'
+                });
+            });
+        }
+        wasDeliveryDetailsComplete = true;
+    } else {
+        $cartTotals.hide();
+        wasDeliveryDetailsComplete = false;
+    }
 }
 
 function updateQuantity(id, change) {
@@ -580,7 +874,7 @@ function whatsappOrderDigits() {
     return String(WHATSAPP_ORDER_NUMBER).replace(/\D/g, '');
 }
 
-function buildWhatsAppOrderText(items) {
+function buildWhatsAppOrderText(items, deliveryDetails = null) {
     const lines = [];
     lines.push('*New order — Fasa Products*');
     lines.push('');
@@ -595,18 +889,34 @@ function buildWhatsAppOrderText(items) {
         lines.push(`   Qty: ${qty} × ${formatPrice(price)} = *${formatPrice(lineTotal)}*`);
     });
     lines.push('');
-    const shipping = subtotal > 50000 ? 0 : 500;
-    const grandTotal = subtotal + shipping;
     lines.push(`Subtotal: *${formatPrice(subtotal)}*`);
-    lines.push(`Shipping: ${shipping === 0 ? 'Free' : formatPrice(shipping)}`);
-    lines.push(`*Total: ${formatPrice(grandTotal)}*`);
+    if (deliveryDetails && hasDeliveryDetails(deliveryDetails)) {
+        const shipping = getShippingFee(items, deliveryDetails);
+        const grandTotal = subtotal + shipping;
+        lines.push(`Shipping: ${formatPrice(shipping)}`);
+        lines.push(`*Total: ${formatPrice(grandTotal)}*`);
+    } else {
+        lines.push('Shipping: *Based on district and delivery type*');
+    }
+    if (deliveryDetails && hasDeliveryDetails(deliveryDetails)) {
+        const deliveryLocation = [
+            deliveryDetails.addressLine1,
+            deliveryDetails.addressLine2,
+            deliveryDetails.district
+        ].filter(Boolean).join(', ');
+
+        lines.push('');
+        lines.push('*Delivery details:*');
+        lines.push(`Delivery Type: ${deliveryDetails.deliveryType}`);
+        lines.push(`Delivery Location: ${deliveryLocation}`);
+    }
     lines.push('');
     lines.push('Please confirm this order. Thank you!');
     return lines.join('\n');
 }
 
 function openWhatsAppWithOrder(items, options = {}) {
-    const { closeCart = false, clearCart = false } = options;
+    const { closeCart = false, clearCart = false, deliveryDetails = null } = options;
     if (!items.length) return;
     const now = Date.now();
     if (now - lastWhatsAppOpenAt < 1200) return;
@@ -618,7 +928,7 @@ function openWhatsAppWithOrder(items, options = {}) {
         return;
     }
 
-    const text = buildWhatsAppOrderText(items);
+    const text = buildWhatsAppOrderText(items, deliveryDetails);
     const url = `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
 
     if (closeCart) {
@@ -646,7 +956,13 @@ function checkout() {
         return;
     }
 
-    openWhatsAppWithOrder(cart, { closeCart: true, clearCart: true });
+    const deliveryDetails = getDeliveryDetails();
+    if (!hasDeliveryDetails(deliveryDetails)) {
+        alert('Please fill delivery type, address lines, and district before checkout.');
+        return;
+    }
+
+    openWhatsAppWithOrder(cart, { closeCart: true, clearCart: true, deliveryDetails });
 }
 
 $(document).ready(function() {
@@ -689,20 +1005,64 @@ $(document).ready(function() {
         checkout();
     });
 
+    $(document).off('input change', '#deliveryType, #deliveryAddress1, #deliveryAddress2, #deliveryDistrict')
+        .on('input change', '#deliveryType, #deliveryAddress1, #deliveryAddress2, #deliveryDistrict', function() {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            if (!cart.length) return;
+            refreshCartSummaryState(cart);
+        });
+
     $(document).off('click', '#buyNowWhatsApp').on('click', '#buyNowWhatsApp', function() {
         const id = Number($(this).data('id'));
         const product = products.find((p) => p.id === id);
         if (!product) return;
-        openWhatsAppWithOrder(
-            [
-                {
-                    id: product.id,
-                    name: product.name,
-                    price: Number(product.price),
-                    quantity: 1
-                }
-            ],
-            { closeCart: false, clearCart: false }
-        );
+        openBuyNowPopup(product);
+    });
+
+    $(document).off('click', '#buyNowPopupClose, #buyNowPopupCancel, #buyNowPopupBackdrop')
+        .on('click', '#buyNowPopupClose, #buyNowPopupCancel, #buyNowPopupBackdrop', function() {
+            closeBuyNowPopup();
+        });
+
+    $(document).off('submit', '#buyNowDeliveryForm').on('submit', '#buyNowDeliveryForm', function(event) {
+        event.preventDefault();
+
+        const popup = document.getElementById('buyNowDeliveryPopup');
+        if (!popup) return;
+
+        const productId = Number(popup.dataset.productId);
+        const product = products.find((p) => Number(p.id) === productId);
+        if (!product) {
+            closeBuyNowPopup();
+            return;
+        }
+
+        const deliveryDetails = getBuyNowDeliveryDetails();
+        if (!hasDeliveryDetails(deliveryDetails)) {
+            alert('Please fill delivery type, address lines, and district.');
+            return;
+        }
+
+        const buyNowItem = {
+            id: product.id,
+            name: product.name,
+            price: Number(product.price),
+            weight: product.weight || '',
+            quantity: 1
+        };
+
+        closeBuyNowPopup();
+        openWhatsAppWithOrder([buyNowItem], { closeCart: false, clearCart: false, deliveryDetails });
+    });
+
+    $(document).off('input change', '#buyNowDeliveryType, #buyNowAddress1, #buyNowAddress2, #buyNowDistrict')
+        .on('input change', '#buyNowDeliveryType, #buyNowAddress1, #buyNowAddress2, #buyNowDistrict', function() {
+            renderBuyNowPricePreview();
+        });
+
+    $(document).off('keydown', '#buyNowDeliveryPopup').on('keydown', '#buyNowDeliveryPopup', function(event) {
+        if (event.key === 'Escape') {
+            closeBuyNowPopup();
+        }
     });
 });

@@ -85,21 +85,72 @@
     <div id="cartItems"></div>
 
     <div class="cart-summary" id="cartSummary" style="display: none;">
-        <div class="summary-row">
-            <span>Subtotal</span>
-            <span id="subtotal">Rs. 0</span>
+        <div class="cart-delivery-form" id="cartDeliveryForm">
+            <label class="cart-form-group">
+                <span>Delivery Type</span>
+                <select id="deliveryType" required>
+                    <option value="">Select delivery type</option>
+                    <option value="Courier">Courier</option>
+                    <option value="Cash on delivery">Cash on delivery</option>
+                </select>
+            </label>
+            <label class="cart-form-group">
+                <span>Address Line 1</span>
+                <input type="text" id="deliveryAddress1" placeholder="House no, street" required>
+            </label>
+            <label class="cart-form-group">
+                <span>Address Line 2</span>
+                <input type="text" id="deliveryAddress2" placeholder="Area / city" required>
+            </label>
+            <label class="cart-form-group">
+                <span>District</span>
+                <select id="deliveryDistrict" required>
+                    <option value="">Select district</option>
+                    <option value="Ampara">Ampara</option>
+                    <option value="Anuradhapura">Anuradhapura</option>
+                    <option value="Badulla">Badulla</option>
+                    <option value="Batticaloa">Batticaloa</option>
+                    <option value="Colombo">Colombo</option>
+                    <option value="Galle">Galle</option>
+                    <option value="Gampaha">Gampaha</option>
+                    <option value="Hambantota">Hambantota</option>
+                    <option value="Jaffna">Jaffna</option>
+                    <option value="Kalutara">Kalutara</option>
+                    <option value="Kandy">Kandy</option>
+                    <option value="Kegalle">Kegalle</option>
+                    <option value="Kilinochchi">Kilinochchi</option>
+                    <option value="Kurunegala">Kurunegala</option>
+                    <option value="Mannar">Mannar</option>
+                    <option value="Matale">Matale</option>
+                    <option value="Matara">Matara</option>
+                    <option value="Monaragala">Monaragala</option>
+                    <option value="Mullaitivu">Mullaitivu</option>
+                    <option value="Nuwara Eliya">Nuwara Eliya</option>
+                    <option value="Polonnaruwa">Polonnaruwa</option>
+                    <option value="Puttalam">Puttalam</option>
+                    <option value="Ratnapura">Ratnapura</option>
+                    <option value="Trincomalee">Trincomalee</option>
+                    <option value="Vavuniya">Vavuniya</option>
+                </select>
+            </label>
         </div>
-        <div class="summary-row">
-            <span>Shipping</span>
-            <span id="shipping">Rs. 0</span>
+        <div id="cartTotals" style="display: none;">
+            <div class="summary-row">
+                <span>Subtotal</span>
+                <span id="subtotal">Rs. 0</span>
+            </div>
+            <div class="summary-row">
+                <span>Shipping</span>
+                <span id="shipping">Rs. 0</span>
+            </div>
+            <div class="summary-row">
+                <span>Total</span>
+                <span id="total">Rs. 0</span>
+            </div>
+            <button type="button" class="checkout-btn" id="checkoutBtn" aria-label="Send cart order on WhatsApp">
+                Order on WhatsApp
+            </button>
         </div>
-        <div class="summary-row">
-            <span>Total</span>
-            <span id="total">Rs. 0</span>
-        </div>
-        <button type="button" class="checkout-btn" id="checkoutBtn" aria-label="Send cart order on WhatsApp">
-            Order on WhatsApp
-        </button>
     </div>
 </div>
 
