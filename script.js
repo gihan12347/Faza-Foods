@@ -590,7 +590,7 @@ function normalizeDeliveryType(deliveryType) {
 function parseWeightToKg(weightValue) {
     if (typeof weightValue !== 'string') return null;
     const normalized = weightValue.trim().toLowerCase();
-    const match = normalized.match(/^(\d+(?:\.\d+)?)\s*(kg|g)$/);
+    const match = normalized.match(/^(\d+(?:\.\d+)?)\s*(kg|g|ml)$/);
     if (!match) return null;
 
     const value = Number(match[1]);
@@ -612,7 +612,7 @@ function getCartWeightKg(items) {
         const itemWeightKg =
             parseWeightToKg(item.weight) ??
             getProductWeightKgById(item.id) ??
-            1;
+            0;
         return sum + (itemWeightKg * quantity);
     }, 0);
 
