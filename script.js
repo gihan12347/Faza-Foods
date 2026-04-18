@@ -875,27 +875,27 @@ function whatsappOrderDigits() {
 
 function buildWhatsAppOrderText(items, deliveryDetails = null) {
     const lines = [];
-    lines.push('*New order — Fasa Products*');
+    lines.push('New order — Fasa Products');
     lines.push('');
-    lines.push('*Items:*');
+    lines.push('Items:');
     let subtotal = 0;
     items.forEach((item, index) => {
         const price = Number(item.price);
         const qty = Math.max(1, Number(item.quantity) || 1);
         const lineTotal = price * qty;
         subtotal += lineTotal;
-        lines.push(`${index + 1}. *${item.name}*`);
-        lines.push(`   Qty: ${qty} × ${formatPrice(price)} = *${formatPrice(lineTotal)}*`);
+        lines.push(`${index + 1}. ${item.name}`);
+        lines.push(`   Qty: ${qty} × ${formatPrice(price)} = ${formatPrice(lineTotal)}`);
     });
     lines.push('');
-    lines.push(`Subtotal: *${formatPrice(subtotal)}*`);
+    lines.push(`Subtotal: ${formatPrice(subtotal)}`);
     if (deliveryDetails && hasDeliveryDetails(deliveryDetails)) {
         const shipping = getShippingFee(items, deliveryDetails);
         const grandTotal = subtotal + shipping;
         lines.push(`Shipping: ${formatPrice(shipping)}`);
-        lines.push(`*Total: ${formatPrice(grandTotal)}*`);
+        lines.push(`Total: ${formatPrice(grandTotal)}`);
     } else {
-        lines.push('Shipping: *Based on district and delivery type*');
+        lines.push('Shipping: *Based on district and delivery type');
     }
     if (deliveryDetails && hasDeliveryDetails(deliveryDetails)) {
         const deliveryLocation = [
@@ -905,12 +905,13 @@ function buildWhatsAppOrderText(items, deliveryDetails = null) {
         ].filter(Boolean).join(', ');
 
         lines.push('');
-        lines.push('*Delivery details:*');
+        lines.push('Delivery details:');
         lines.push(`Delivery Type: ${deliveryDetails.deliveryType}`);
         lines.push(`Delivery Location: ${deliveryLocation}`);
     }
     lines.push('');
     lines.push('Please confirm this order. Thank you!');
+    lines.push('This message was generated automatically by https://fasafoods.com.');
     return lines.join('\n');
 }
 
