@@ -1005,6 +1005,7 @@ $(document).ready(function() {
         checkout();
     });
 
+    //remove previous listeners to prevent duplicates, then add new listeners for delivery details changes
     $(document).off('input change', '#deliveryType, #deliveryAddress1, #deliveryAddress2, #deliveryDistrict')
         .on('input change', '#deliveryType, #deliveryAddress1, #deliveryAddress2, #deliveryDistrict', function() {
             const cart = JSON.parse(localStorage.getItem('cart')) || [];
