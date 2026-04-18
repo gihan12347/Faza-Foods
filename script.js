@@ -672,7 +672,6 @@ function hasDeliveryDetails(details = getDeliveryDetails()) {
     return Boolean(
         details.deliveryType &&
         details.addressLine1 &&
-        details.addressLine2 &&
         details.district
     );
 }
@@ -820,23 +819,25 @@ function clearDeliveryDetails() {
     wasDeliveryDetailsComplete = false;
 }
 
+function scrollCartSummaryToBottom() {
+    const cartSummaryEl = $('#cartSummary').get(0);
+    if (!cartSummaryEl) return;
+    requestAnimationFrame(() => {
+        cartSummaryEl.scrollTo({
+            top: cartSummaryEl.scrollHeight,
+            behavior: 'smooth'
+        });
+    });
+}
+
 function refreshCartSummaryState(cart) {
     const details = getDeliveryDetails();
     const isComplete = hasDeliveryDetails(details);
     const $cartTotals = $('#cartTotals');
-    const cartSummaryEl = $('#cartSummary').get(0);
 
     if (isComplete) {
         updateSummary(cart, details);
         $cartTotals.show();
-        if (!wasDeliveryDetailsComplete && cartSummaryEl) {
-            requestAnimationFrame(() => {
-                cartSummaryEl.scrollTo({
-                    top: cartSummaryEl.scrollHeight,
-                    behavior: 'smooth'
-                });
-            });
-        }
         wasDeliveryDetailsComplete = true;
     } else {
         $cartTotals.hide();
@@ -1009,6 +1010,15 @@ $(document).ready(function() {
             if (!cart.length) return;
             refreshCartSummaryState(cart);
         });
+
+    // Scroll totals into view after leaving Address Line 1 (blur / click outside), once delivery is complete.
+    $(document).off('focusout', '#deliveryAddress1').on('focusout', '#deliveryAddress1', function() {
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        if (!cart.length) return;
+        refreshCartSummaryState(cart);
+        if (!hasDeliveryDetails()) return;
+        scrollCartSummaryToBottom();
+    });
 
     $(document).off('click', '#buyNowWhatsApp').on('click', '#buyNowWhatsApp', function() {
         const id = Number($(this).data('id'));

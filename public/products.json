@@ -4,7 +4,6 @@
       "ingredients": [
         "Sprouted Ragi",
         "Cocoa powder",
-        "Sugar",
         "Nuts"
       ],
       "useFor": [
@@ -28,10 +27,7 @@
     },
     {
       "ingredients": [
-        "Sprouted Ragi",
-        "Cocoa powder",
-        "Sugar",
-        "Nuts"
+        "Sprouted Ragi"
       ],
       "useFor": [
         "Increase immunity"
