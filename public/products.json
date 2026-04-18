@@ -134,11 +134,11 @@
       "isBestSeller": false,
       "originalPrice": 380,
       "images": [
-        "/public/images/atta-flour.png"
+        "/public/images/aata-flour.png"
       ],
       "weight": "500g",
       "id": 6,
-      "image": "/public/images/atta-flour.png",
+      "image": "/public/images/aata-flour.png",
       "howToUse": "Use in any recipe",
       "description": "Whole wheat flour blend.",
       "category": "Special Homemade Items"
