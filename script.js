@@ -885,7 +885,7 @@ function buildWhatsAppOrderText(items, deliveryDetails = null) {
         const lineTotal = price * qty;
         subtotal += lineTotal;
         lines.push(`${index + 1}. ${item.name}`);
-        lines.push(`   Qty: ${qty} × ${formatPrice(price)} = ${formatPrice(lineTotal)}`);
+        lines.push(`   item size: ${item.weight}, Qty: ${qty} × ${formatPrice(price)} = ${formatPrice(lineTotal)}`);
     });
     lines.push('');
     lines.push(`Subtotal: ${formatPrice(subtotal)}`);
