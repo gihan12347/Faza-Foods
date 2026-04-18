@@ -911,6 +911,7 @@ function buildWhatsAppOrderText(items, deliveryDetails = null) {
     }
     lines.push('');
     lines.push('Please confirm this order. Thank you!');
+    lines.push('');
     lines.push('This message was generated automatically by https://fasafoods.com.');
     return lines.join('\n');
 }
