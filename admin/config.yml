@@ -35,13 +35,18 @@ collections:
                 name: "category"
                 widget: "select"
                 options:
-                  - "Spicy Foods"
+                  - "Masalas & Cooking Essentials"
                   - "Cosmetics Products"
                   - "Other Products"
+                  - "Baby & Kids Products"
+                  - "Healthy Food & Traditional Mixes"
+                  - "Special Homemade Items"
+                required: true
 
               - label: "Description"
                 name: "description"
                 widget: "text"
+                required: false
 
               - label: "Price"
                 name: "price"
