@@ -395,7 +395,7 @@
       "price": 630,
       "name": "ABC Malt",
       "isBestSeller": false,
-      "originalPrice": 630,
+      "originalPrice": 700,
       "images": [
         "/public/images/abc-malt.jpeg"
       ],
