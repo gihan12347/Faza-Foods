@@ -17,11 +17,11 @@
       "isBestSeller": true,
       "originalPrice": 320,
       "images": [
-        "/public/images/sprouted-ragi-mix.jpeg"
+        "/public/images/sprouted-ragi-mix.png"
       ],
       "weight": "50g",
       "id": 1,
-      "image": "/public/images/sprouted-ragi-mix.jpeg",
+      "image": "/public/images/sprouted-ragi-mix.png",
       "howToUse": "Mix with hot milk",
       "description": "Nutritious sprouted ragi mix enriched with cocoa and nuts.",
       "category": "Healthy Food & Traditional Mixes"
@@ -134,11 +134,11 @@
       "isBestSeller": false,
       "originalPrice": 380,
       "images": [
-        "/public/images/atta-flour.jpeg"
+        "/public/images/atta-flour.png"
       ],
       "weight": "500g",
       "id": 6,
-      "image": "/public/images/atta-flour.jpeg",
+      "image": "/public/images/atta-flour.png",
       "howToUse": "Use in any recipe",
       "description": "Whole wheat flour blend.",
       "category": "Special Homemade Items"
@@ -739,11 +739,11 @@
       "isBestSeller": false,
       "originalPrice": 800,
       "images": [
-        "/public/images/chicken-pickle.jpeg"
+        "/public/images/chicken-pickle.png"
       ],
       "weight": "100g",
       "id": 29,
-      "image": "/public/images/chicken-pickle.jpeg",
+      "image": "/public/images/chicken-pickle.png",
       "howToUse": "Can have with rice,rotting,bread etc",
       "description": "",
       "category": "Special Homemade Items"
