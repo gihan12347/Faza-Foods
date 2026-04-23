@@ -623,23 +623,21 @@ function getShippingFee(items, deliveryDetails) {
     if (!deliveryDetails || !hasDeliveryDetails(deliveryDetails)) {
         return 0;
     }
+    const deliveryTypeKey = normalizeDeliveryType(deliveryDetails.deliveryType);
 
-    if (Array.isArray(items) && items.length === 1) {
-        const item = items[0];
+    if (deliveryTypeKey === 'courier' && Array.isArray(items) && items.length === 1) {
+        const [item] = items;
         const itemName = String(item?.name || '').trim().toLowerCase();
-        const itemQty = Math.max(1, Number(item?.quantity) || 1);
+        const quantity = Math.max(1, Number(item?.quantity) || 1);
+        const isHairOil = itemName === 'hair oil' || itemName.includes('hair oil');
 
-        if (itemName === 'hair oil') {
-            if (itemQty > 1) {
-                return 0;
-            }
-            return 250;
+        if (isHairOil) {
+            return quantity > 1 ? 0 : 250;
         }
     }
 
     const normalizedDistrict = normalizeDistrictName(deliveryDetails.district);
     const districtGroup = SPECIAL_RATE_DISTRICTS.has(normalizedDistrict) ? 'special' : 'normal';
-    const deliveryTypeKey = normalizeDeliveryType(deliveryDetails.deliveryType);
     const rates = SHIPPING_RATES[districtGroup][deliveryTypeKey] || SHIPPING_RATES[districtGroup].courier;
 
     const totalWeightKg = getCartWeightKg(items);
