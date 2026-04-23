@@ -148,10 +148,10 @@
       "useFor": [
         "Spicy porridge"
       ],
-      "price": 250,
+      "price": 270,
       "name": "Kodhipaal",
       "isBestSeller": false,
-      "originalPrice": 250,
+      "originalPrice": 270,
       "images": [
         "/public/images/kodhipaal.jpeg"
       ],
@@ -255,10 +255,10 @@
       "useFor": [
         "Cure hair problems"
       ],
-      "price": 1650,
+      "price": 1700,
       "name": "Hair Oil",
       "isBestSeller": false,
-      "originalPrice": 1650,
+      "originalPrice": 1700,
       "images": [
         "/public/images/oil.jpeg"
       ],
