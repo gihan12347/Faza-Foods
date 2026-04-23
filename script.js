@@ -624,6 +624,19 @@ function getShippingFee(items, deliveryDetails) {
         return 0;
     }
 
+    if (Array.isArray(items) && items.length === 1) {
+        const item = items[0];
+        const itemName = String(item?.name || '').trim().toLowerCase();
+        const itemQty = Math.max(1, Number(item?.quantity) || 1);
+
+        if (itemName === 'hair oil') {
+            if (itemQty > 1) {
+                return 0;
+            }
+            return 250;
+        }
+    }
+
     const normalizedDistrict = normalizeDistrictName(deliveryDetails.district);
     const districtGroup = SPECIAL_RATE_DISTRICTS.has(normalizedDistrict) ? 'special' : 'normal';
     const deliveryTypeKey = normalizeDeliveryType(deliveryDetails.deliveryType);
