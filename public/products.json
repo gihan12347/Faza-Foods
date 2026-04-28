@@ -392,10 +392,10 @@
         "Increase Hb level",
         "Brighten skin"
       ],
-      "price": 630,
+      "price": 720,
       "name": "ABC Malt",
       "isBestSeller": false,
-      "originalPrice": 700,
+      "originalPrice": 801,
       "images": [
         "/public/images/abc-malt.jpeg"
       ],
