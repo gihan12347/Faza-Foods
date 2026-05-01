@@ -23,7 +23,7 @@
       "image": "/public/images/sprouted-ragi-mix.png",
       "howToUse": "Mix with hot milk",
       "description": "Nutritious sprouted ragi mix enriched with cocoa and nuts.",
-      "category": "Healthy Food & Traditional Mixes"
+      "category": "Baby & Kids Products"
     },
     {
       "ingredients": [
@@ -711,7 +711,7 @@
       "images": [
         "/public/images/ghee.jpeg"
       ],
-      "weight": "50g",
+      "weight": "100g",
       "id": 28,
       "image": "/public/images/ghee.jpeg",
       "howToUse": "Add in your many kind of recipes",
