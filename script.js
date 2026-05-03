@@ -9,6 +9,17 @@ const FASA_ORDERS_WHATSAPP_PHONE = '94740633345';
 const ORDER_PHONE_DIGIT_LENGTH = 10;
 const ORDER_SUBMIT_SPINNER_SRC = '/public/images/cart.gif';
 const ORDER_FAIL_WHATSAPP_USER_MESSAGE = 'We could not submit your order online. WhatsApp should open with your order details — please send that message to Fasa Products to confirm your order. If WhatsApp did not open, check your popup blocker or contact us from the site footer.';
+
+/** GA4 (gtag.js on index/product pages): count product CTA clicks; safe if gtag blocked or missing. */
+function trackProductCtaGa4(buttonId, productId) {
+    if (typeof gtag !== 'function') return;
+    const params = { button_id: String(buttonId || '') };
+    if (productId != null && productId !== '') {
+        params.product_id = String(productId);
+    }
+    gtag('event', 'product_cta_click', params);
+}
+
 let wasCartOrderSummaryUnlocked = false;
 let wasBuyNowPricePreviewComplete = false;
 
@@ -1402,6 +1413,7 @@ $(document).ready(function() {
 
     $(document).off('click', '#addToCart').on('click', '#addToCart', function() {
         const id = $(this).data('id');
+        trackProductCtaGa4('addToCart', id);
         const product = products.find(p => p.id === id);
         addToCart(product);
     });
@@ -1464,6 +1476,7 @@ $(document).ready(function() {
 
     $(document).off('click', '#orderNowBtn').on('click', '#orderNowBtn', function() {
         const id = Number($(this).data('id'));
+        trackProductCtaGa4('orderNowBtn', id);
         const product = products.find((p) => p.id === id);
         if (!product) return;
         openBuyNowPopup(product);
