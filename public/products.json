@@ -772,6 +772,36 @@
       "howToUse": "Add in your fish curry recipe.",
       "description": "",
       "category": "Masalas & Cooking Essentials"
+    },
+ {
+      "ingredients": [
+       "Shihaka", 
+       "Soap Nut", 
+       "Fenugreek", 
+       "Clove", 
+       "Green Gram", 
+       "Vetiver", 
+       "Henna", 
+       "Hibiscus", 
+       "Curry Leaves", 
+       "Nelli"
+      ],
+      "useFor": [
+        "As a cosmetic product."
+      ],
+      "price": 800,
+      "name": "Shihaka powder",
+      "isBestSeller": false,
+      "originalPrice": 800,
+      "images": [
+        "/public/images/hair-mask-powder.png"
+      ],
+      "weight": "100g",
+      "id": 31,
+      "image": "/public/images/hair-mask-powder.png",
+      "howToUse": "",
+      "description": "",
+      "category": "Cosmetics Products"
     }
   ]
 }
