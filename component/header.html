@@ -86,22 +86,35 @@
 
     <div class="cart-summary" id="cartSummary" style="display: none;">
         <div class="cart-delivery-form" id="cartDeliveryForm">
-            <label class="cart-form-group">
+            <label class="cart-form-group cart-form-group--delivery-type">
                 <span>Delivery Type</span>
                 <select id="deliveryType" required>                
                     <option value="Courier">Courier</option>
                     <option value="Cash on delivery">Cash on delivery</option>
                 </select>
             </label>
-            <label class="cart-form-group">
+            <label class="cart-form-group cart-form-group--customer-name">
+                <span>Full name</span>
+                <input type="text" id="deliveryCustomerName" name="customerName" autocomplete="name" inputmode="text" placeholder="Your full name" required maxlength="120">
+            </label>
+            <label class="cart-form-group cart-form-group--address1">
                 <span>Address Line 1</span>
                 <input type="text" id="deliveryAddress1" placeholder="House no, street" required>
             </label>
-            <label class="cart-form-group">
-                <span>Address Line 2</span>
-                <input type="text" id="deliveryAddress2" placeholder="Area / city" required>
+            <label class="cart-form-group cart-form-group--address2">
+                <span>Address Line 2 <span class="field-optional">(optional)</span></span>
+                <input type="text" id="deliveryAddress2" placeholder="Area / city">
             </label>
-            <label class="cart-form-group">
+            <label class="cart-form-group cart-form-group--whatsapp">
+                <span>WhatsApp Number</span>
+                <input type="tel" id="deliveryWhatsAppNumber" inputmode="numeric" maxlength="10" autocomplete="tel" placeholder="0771234567" required>
+            </label>
+            <label class="cart-form-group cart-form-group--other-phone">
+                <span>Other Phone Number</span>
+                <input type="tel" id="deliveryOtherPhoneNumber" inputmode="numeric" maxlength="10" autocomplete="tel" placeholder="0712345678" required>
+            </label>
+            <p class="cart-phone-error hidden" id="deliveryPhoneError" role="alert" aria-live="polite"></p>
+            <label class="cart-form-group cart-form-group--district">
                 <span>District</span>
                 <select id="deliveryDistrict" required>
                     <option value="Ampara">Ampara</option>
@@ -145,8 +158,8 @@
                 <span>Total</span>
                 <span id="total">Rs. 0</span>
             </div>
-            <button type="button" class="checkout-btn" id="checkoutBtn" aria-label="Send cart order on WhatsApp">
-                Order on WhatsApp
+            <button type="button" class="checkout-btn" id="checkoutBtn" disabled aria-label="Send cart order to backend">
+                Order Now
             </button>
         </div>
     </div>

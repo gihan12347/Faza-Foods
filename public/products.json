@@ -4,7 +4,6 @@
       "ingredients": [
         "Sprouted Ragi",
         "Cocoa powder",
-        "Sugar",
         "Nuts"
       ],
       "useFor": [
@@ -24,20 +23,17 @@
       "image": "/public/images/sprouted-ragi-mix.png",
       "howToUse": "Mix with hot milk",
       "description": "Nutritious sprouted ragi mix enriched with cocoa and nuts.",
-      "category": "Healthy Food & Traditional Mixes"
+      "category": "Masalas & Cooking Essentials"
     },
     {
       "ingredients": [
-        "Sprouted Ragi",
-        "Cocoa powder",
-        "Sugar",
-        "Nuts"
+        "Sprouted Ragi"
       ],
       "useFor": [
         "Increase immunity"
       ],
       "price": 400,
-      "name": "Sprouted Ragi Powder",
+      "name": "Sprouted Ragi Powder (Kurakkan)",
       "isBestSeller": true,
       "originalPrice": 400,
       "images": [
@@ -48,7 +44,7 @@
       "image": "/public/images/sprouted-ragi-powder.jpeg",
       "howToUse": "Making porridge",
       "description": "Healthy sprouted ragi powder for daily nutrition.",
-      "category": "Masalas & Cooking Essentials"
+      "category": "Baby & Kids Products"
     },
     {
       "ingredients": [
@@ -152,10 +148,10 @@
       "useFor": [
         "Spicy porridge"
       ],
-      "price": 250,
+      "price": 270,
       "name": "Kodhipaal",
       "isBestSeller": false,
-      "originalPrice": 250,
+      "originalPrice": 270,
       "images": [
         "/public/images/kodhipaal.jpeg"
       ],
@@ -259,10 +255,10 @@
       "useFor": [
         "Cure hair problems"
       ],
-      "price": 1650,
+      "price": 1700,
       "name": "Hair Oil",
       "isBestSeller": false,
-      "originalPrice": 1650,
+      "originalPrice": 1700,
       "images": [
         "/public/images/oil.jpeg"
       ],
@@ -396,10 +392,10 @@
         "Increase Hb level",
         "Brighten skin"
       ],
-      "price": 630,
+      "price": 720,
       "name": "ABC Malt",
       "isBestSeller": false,
-      "originalPrice": 630,
+      "originalPrice": 800,
       "images": [
         "/public/images/abc-malt.jpeg"
       ],
@@ -715,7 +711,7 @@
       "images": [
         "/public/images/ghee.jpeg"
       ],
-      "weight": "50g",
+      "weight": "100g",
       "id": 28,
       "image": "/public/images/ghee.jpeg",
       "howToUse": "Add in your many kind of recipes",

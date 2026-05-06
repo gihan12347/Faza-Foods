@@ -119,5 +119,5 @@ This project is created for client use. All rights reserved.
 ## How to run the project
 - prerequisites : need to install note js
 - npm install -g serve
-- serve F:/fasaproducts/fasaproducts
+- serve .
 
