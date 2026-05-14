@@ -48,30 +48,6 @@
     },
     {
       "ingredients": [
-        "Lemon",
-        "Chili",
-        "Chili flakes",
-        "Salt"
-      ],
-      "useFor": [
-        "Eating with rice"
-      ],
-      "price": 450,
-      "name": "Lime Pickle",
-      "isBestSeller": false,
-      "originalPrice": 450,
-      "images": [
-        "/public/images/lime-pickle.jpeg"
-      ],
-      "weight": "250g",
-      "id": 3,
-      "image": "/public/images/lime-pickle.jpeg",
-      "howToUse": "Serve with rice or rotti",
-      "description": "Traditional homemade lime pickle.",
-      "category": "Special Homemade Items"
-    },
-    {
-      "ingredients": [
         "100% Raw rice"
       ],
       "useFor": [
