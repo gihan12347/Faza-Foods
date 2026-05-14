@@ -654,10 +654,10 @@
       "useFor": [
         "To make sweets and dishes."
       ],
-      "price": 650,
+      "price": 750,
       "name": "Ghee",
       "isBestSeller": false,
-      "originalPrice": 650,
+      "originalPrice": 750,
       "images": [
         "/public/images/ghee.jpeg"
       ],
