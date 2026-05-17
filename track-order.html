@@ -3,92 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Browse our amazing collection of products. Find best sellers, special offers, and discover your perfect match.">
-    <title>Fasa Products - Your Product Catalog</title>
+    <meta name="description" content="Check your Fasa Products order status using the order token from your confirmation.">
+    <title>Track order — Fasa Products</title>
     <link rel="icon" type="image/jpeg" href="/public/images/fasa-logo.jpeg">
     <link rel="apple-touch-icon" href="/public/images/fasa-logo.jpeg">
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        (function () {
+            try {
+                var p = new URLSearchParams(window.location.search);
+                var t = p.get('token');
+                if (!t) return;
+                t = String(t).trim();
+                if (!t) return;
+                window.__FASA_ORDER_TOKEN__ = t;
+                try { sessionStorage.setItem('fasa_track_token', t); } catch (e) { /* ignore */ }
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
 </head>
-<body class="home-page">
-    <!-- Header -->
+<body class="track-order-page">
     <div id="header"></div>
 
-    <main class="home-main">
-    <section class="offer-timeline" aria-label="Limited time hair oil offer">
-        <div class="container">
-            <div class="offer-timeline__content">
-                <img src="/public/images/oil.jpeg" alt="Hair oil offer bottle" class="offer-timeline__image" width="64" height="64">
-                <div class="offer-timeline__text">
-                    <p class="offer-timeline__title">Special deposit only delivery offer for Hair Oil</p>
-                    <div class="offer-timeline__deals">
-                        <span class="offer-timeline__deal">Buy 1 Bottle (Rs. 1700): Rs. 250 for delivery (deposit only)</span>
-                        <span class="offer-timeline__deal offer-timeline__deal--free">Buy 2+ Bottles: FREE Delivery (deposit only)</span>
-                    </div>            
+    <main class="order-track-main">
+        <section class="section order-track-section" aria-labelledby="order-track-title">
+            <div class="container">
+                <div class="section-header">
+                    <h1 class="section-title" id="order-track-title">Track your order</h1>
+                    <p class="section-subtitle">Enter the order token from your checkout confirmation screen. If you opened a tracking link from your confirmation, your token is filled in automatically.</p>
                 </div>
-                <a href="https://fasafoods.com/product?id=11" class="offer-timeline__link" target="_blank" rel="noopener noreferrer">View Product</a>
-            </div>
-        </div>
-    </section>
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="container">
-            <div class="hero-content">
-                <h1 class="hero-title">Discover Amazing Products</h1>
-                <p class="hero-subtitle">Explore our curated collection of premium products</p>
-                <a href="#products" class="btn btn-primary">Shop Now</a>
-            </div>
-        </div>
-    </section>
 
-    <!-- Best Sellers Section -->
-    <section class="section best-sellers" id="best-sellers">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Best Sellers</h2>
-                <p class="section-subtitle">Our most popular products</p>
-            </div>
-            <div class="products-grid" id="bestSellersGrid">
-                <!-- Products will be dynamically loaded here -->
-            </div>
-        </div>
-    </section>
+                <div class="order-track-panel">
+                    <form id="orderTrackForm" class="order-track-form" autocomplete="on">
+                        <label class="order-track-form__label" for="orderTrackTokenInput">Order token</label>
+                        <input type="text" id="orderTrackTokenInput" name="orderToken" class="order-track-form__input" placeholder="Paste your order token" maxlength="120" autocomplete="one-time-code">
+                        <button type="submit" class="btn btn-primary order-track-form__submit">Check status</button>
+                    </form>
 
-    <!-- Special Offers Section -->
-    <section class="section offers" id="offers">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Special Offers</h2>
-                <p class="section-subtitle">Limited time deals you don't want to miss</p>
+                    <div id="orderTrackResult" class="order-track-result" aria-live="polite"></div>
+                </div>
             </div>
-            <div class="products-grid" id="offersGrid">
-                <!-- Products will be dynamically loaded here -->
-            </div>
-        </div>
-    </section>
-
-    <!-- All Products Section -->
-    <section class="section products" id="products">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">All Products</h2>
-                <p class="section-subtitle">Browse our complete collection</p>
-            </div>
-            <div class="filter-bar">
-                <button class="filter-btn active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="Masalas & Cooking Essentials">Masalas & Cooking Essentials</button>
-                <button class="filter-btn" data-filter="Cosmetics Products">Cosmetics Products</button>
-                <button class="filter-btn" data-filter="Baby & Kids Products">Baby & Kids Products</button>
-                <button class="filter-btn" data-filter="Healthy Food & Traditional Mixes">Healthy Food & Traditional Mixes</button>
-                <button class="filter-btn" data-filter="Special Homemade Items">Special Homemade Items</button>
-            </div>
-            <div class="products-grid" id="productsGrid">
-                <!-- Products will be dynamically loaded here -->
-            </div>
-        </div>
-    </section>
+        </section>
     </main>
 
     <button type="button" id="scrollToTopBtn" class="scroll-to-top" aria-label="Scroll to top">
@@ -97,7 +55,6 @@
         </svg>
     </button>
 
-    <!-- Footer -->
     <footer class="footer" id="contact">
         <div class="container footer-container">
             <div class="footer-content">
@@ -165,38 +122,45 @@
             </div>
         </div>
     </footer>
+
     <script src="jquery.js"></script>
     <script src="include.js"></script>
-    <script> 
-        document.getElementById("year").textContent = new Date().getFullYear(); 
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
     </script>
     <script>
         headerReady.then(() => {
-            setActiveNavById('nav-home');
+            if (typeof setActiveNavById === 'function') {
+                setActiveNavById('nav-track-order');
+            }
         });
+    </script>
+    <script>
+        (function () {
+            function readToken() {
+                if (window.__FASA_ORDER_TOKEN__) return String(window.__FASA_ORDER_TOKEN__).trim();
+                try {
+                    var p = new URLSearchParams(window.location.search);
+                    var t = p.get('token');
+                    return t ? String(t).trim() : '';
+                } catch (e) { return ''; }
+            }
+            function fillInput() {
+                var token = readToken();
+                if (!token) return;
+                var input = document.getElementById('orderTrackTokenInput');
+                if (!input) return;
+                input.value = token;
+                window.__FASA_ORDER_TOKEN__ = token;
+                try { sessionStorage.setItem('fasa_track_token', token); } catch (e) { /* ignore */ }
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', fillInput, { once: true });
+            } else {
+                fillInput();
+            }
+        })();
     </script>
     <script type="module" src="script.js"></script>
-    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-    <script>
-    if (window.netlifyIdentity) {
-        window.netlifyIdentity.on("init", user => {
-        if (!user) {
-            window.netlifyIdentity.on("login", () => {
-            document.location.href = "/admin/";
-            });
-        }
-        });
-    }
-    </script>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W1L31FE6T9"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-
-        gtag('config', 'G-W1L31FE6T9');
-    </script>
 </body>
 </html>
-

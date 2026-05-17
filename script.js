@@ -1,14 +1,21 @@
-import { getReviews } from "./review.js";
-
 let products = [];
 
-const SPRING_BOOT_ORDER_API_URL = 'https://helpful-liberation-production-ed7d.up.railway.app/api/orders';
+/** Order API: POST + public GET contract — see reference/fasa-orders-api/README.txt */
+const SPRING_BOOT_ORDER_API_URL = 'http://localhost:8082/api/orders';
+/** Public read-only status by token (fasa-orders-api GET …/public/{token}). */
+const ORDER_PUBLIC_STATUS_PATH = '/public';
 /** Business WhatsApp (digits only, country code). Keep in sync with footer wa.me links. */
-const FASA_ORDERS_WHATSAPP_PHONE = '94740633345';
+const FASA_ORDERS_WHATSAPP_PHONE = '94767486675';
 /** Digits only, after stripping non-digits (e.g. 0771234567). */
 const ORDER_PHONE_DIGIT_LENGTH = 10;
 const ORDER_SUBMIT_SPINNER_SRC = '/public/images/cart.gif';
 const ORDER_FAIL_WHATSAPP_USER_MESSAGE = 'We could not submit your order online. WhatsApp should open with your order details — please send that message to Fasa Products to confirm your order. If WhatsApp did not open, check your popup blocker or contact us from the site footer.';
+/** Spring order API: same customer already has a pending order; show replace confirmation. */
+const ORDER_STATUS_CONFIRM_PENDING = 'CONFIRM_PENDING_ORDER';
+const ORDER_STATUS_UPDATE_PENDING_FAILED = 'UPDATE_PENDING_FAILED';
+
+let pendingOrderReplaceAcceptHandler = null;
+let trackOrderPageInitialized = false;
 
 /** GA4 (gtag.js on index/product pages): count product CTA clicks; safe if gtag blocked or missing. */
 function trackProductCtaGa4(buttonId, productId) {
@@ -217,7 +224,7 @@ function loadProductDetails() {
         if (relatedProducts.length === 0) {
             relatedGrid.setAttribute('data-empty', 'true');
             relatedGrid.innerHTML =
-                '<p class="related-products__empty">No other products in this category yet. <a href="index.html#products">Browse the full catalog</a>.</p>';
+                '<p class="related-products__empty">No other products in this category yet. <a href="/#products">Browse the full catalog</a>.</p>';
         } else {
             relatedGrid.removeAttribute('data-empty');
             renderProducts(relatedProducts, 'relatedProductsGrid');
@@ -298,6 +305,7 @@ function renderProductDetails(product) {
 
 async function renderReviews(productId) {
     try {
+        const { getReviews } = await import('./review.js');
         const reviews = await getReviews(productId);
         const reviewCount = reviews.length;
         const totalRating = reviewCount
@@ -456,10 +464,28 @@ function initScrollToTopButton() {
     toggleScrollButton();
 }
 
+function isProductDetailsPage() {
+    if (document.body && document.body.classList.contains('product-page')) {
+        return true;
+    }
+    const path = (window.location.pathname || '').toLowerCase();
+    return path === '/product' || path.endsWith('/product') || path.endsWith('/product.html');
+}
+
 // ============================================
 // Initialize Page
 // ============================================
 async function init() {
+    if (document.body.classList.contains('track-order-page')) {
+        initMobileMenu();
+        initSmoothScrolling();
+        initScrollToTopButton();
+        if (!trackOrderPageInitialized) {
+            initTrackOrderPage();
+        }
+        return;
+    }
+
     // Load products data
     await loadProducts();
 
@@ -475,40 +501,34 @@ async function init() {
     // Initialize scroll-to-top button
     initScrollToTopButton();
     
-    // Check if we're on the product details page
-    if (window.location.pathname.endsWith('/product')) {
+    if (isProductDetailsPage()) {
         loadProductDetails();
-    } else {
-        // Load products on index page
-        const bestSellers = products.filter(p => p.isBestSeller);
-        const offers = products.filter(p => p.originalPrice > p.price);
-        
-        if (bestSellers.length) {
-            renderProducts(bestSellers, 'bestSellersGrid');
-        }
-        if (offers.length) {
-            renderProducts(offers, 'offersGrid');
-        } else {
-            const offersEl = document.getElementById('offers');
-            offersEl.style.display = 'none';
-            document.querySelector('a[href="#offers"]')?.closest('li')?.remove();
-        }
-        renderProducts(products, 'productsGrid');
-        
-        // Initialize filter buttons
-        const filterButtons = document.querySelectorAll('.filter-btn');
-        filterButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                // Update active state
-                filterButtons.forEach(btn => btn.classList.remove('active'));
-                this.classList.add('active');
-                
-                // Filter products
-                const filter = this.dataset.filter;
-                filterProducts(filter);
-            });
-        });
+        return;
     }
+
+    const bestSellers = products.filter(p => p.isBestSeller);
+    const offers = products.filter(p => p.originalPrice > p.price);
+
+    if (bestSellers.length) {
+        renderProducts(bestSellers, 'bestSellersGrid');
+    }
+    if (offers.length) {
+        renderProducts(offers, 'offersGrid');
+    } else {
+        const offersEl = document.getElementById('offers');
+        offersEl.style.display = 'none';
+        document.querySelector('a[href="#offers"]')?.closest('li')?.remove();
+    }
+    renderProducts(products, 'productsGrid');
+
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            filterProducts(this.dataset.filter);
+        });
+    });
 }
 
 function addToCart(product) {
@@ -543,14 +563,22 @@ function updateCartBadge() {
     });
 }
 
-window.headerReady.then(() => {
-    console.log('Header loaded - updating cart badge');
+function scheduleAppInit() {
     if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', init, { once: true });
     } else {
         init();
     }
-});
+}
+
+window.headerReady
+    .then(() => {
+        console.log('Header loaded - updating cart badge');
+    })
+    .catch((err) => {
+        console.warn('Header load failed; continuing without header:', err);
+    })
+    .finally(scheduleAppInit);
 
 // Render cart items dynamically
 function renderCart() {
@@ -566,7 +594,7 @@ function renderCart() {
                     <img src="/public/images/cart.png" alt="" class="empty-cart-icon-image">
                 </div>
                 <p>Your cart is empty</p>
-                <button onclick="window.location.href='index.html'">Continue Shopping</button>
+                <button onclick="window.location.href='/'">Continue Shopping</button>
             </div>
         `);
         clearDeliveryDetails();
@@ -899,7 +927,20 @@ function closeBuyNowPopup() {
 }
 
 function ensureOrderFeedbackPopup() {
-    if (document.getElementById('orderFeedbackPopup')) return;
+    const existing = document.getElementById('orderFeedbackPopup');
+    if (existing && !document.getElementById('orderFeedbackDownloadReceipt')) {
+        const actions = existing.querySelector('.order-feedback-popup__actions');
+        if (actions) {
+            actions.id = 'orderFeedbackActions';
+            actions.insertAdjacentHTML('afterbegin', `
+                <button type="button" class="order-feedback-popup__btn order-feedback-popup__download-receipt-btn hidden" id="orderFeedbackDownloadReceipt">
+                    <span class="order-feedback-popup__download-icon" aria-hidden="true">↓</span>
+                    Download receipt (PDF)
+                </button>
+            `);
+        }
+    }
+    if (existing) return;
 
     const popupMarkup = `
         <div class="order-feedback-popup hidden" id="orderFeedbackPopup" role="dialog" aria-modal="true" aria-labelledby="orderFeedbackTitle">
@@ -910,7 +951,11 @@ function ensureOrderFeedbackPopup() {
                     <button type="button" class="order-feedback-popup__close" id="orderFeedbackClose" aria-label="Close order update popup">&times;</button>
                 </div>
                 <div class="order-feedback-popup__message" id="orderFeedbackMessage"></div>
-                <div class="order-feedback-popup__actions">
+                <div class="order-feedback-popup__actions" id="orderFeedbackActions">
+                    <button type="button" class="order-feedback-popup__btn order-feedback-popup__download-receipt-btn hidden" id="orderFeedbackDownloadReceipt">
+                        <span class="order-feedback-popup__download-icon" aria-hidden="true">↓</span>
+                        Download receipt (PDF)
+                    </button>
                     <button type="button" class="order-feedback-popup__btn" id="orderFeedbackOk">OK</button>
                 </div>
             </div>
@@ -920,10 +965,182 @@ function ensureOrderFeedbackPopup() {
     document.body.insertAdjacentHTML('beforeend', popupMarkup);
 }
 
+function restoreOrderFeedbackPopupChrome() {
+    const ok = document.getElementById('orderFeedbackOk');
+    const downloadBtn = document.getElementById('orderFeedbackDownloadReceipt');
+    const closeBtn = document.getElementById('orderFeedbackClose');
+    const popup = document.getElementById('orderFeedbackPopup');
+    ok?.classList.remove('hidden');
+    downloadBtn?.classList.add('hidden');
+    closeBtn?.classList.remove('hidden');
+    if (downloadBtn) {
+        downloadBtn.disabled = false;
+    }
+    if (popup) {
+        delete popup.dataset.receiptDownloadUrl;
+    }
+}
+
+function configureOrderSuccessPopupActions(downloadUrl) {
+    const ok = document.getElementById('orderFeedbackOk');
+    const downloadBtn = document.getElementById('orderFeedbackDownloadReceipt');
+    const closeBtn = document.getElementById('orderFeedbackClose');
+    const popup = document.getElementById('orderFeedbackPopup');
+    const url = String(downloadUrl || '').trim();
+    if (!popup) return;
+
+    closeBtn?.classList.add('hidden');
+
+    if (url) {
+        popup.dataset.receiptDownloadUrl = url;
+        ok?.classList.add('hidden');
+        downloadBtn?.classList.remove('hidden');
+        if (downloadBtn) {
+            downloadBtn.disabled = false;
+        }
+    } else {
+        delete popup.dataset.receiptDownloadUrl;
+        ok?.classList.remove('hidden');
+        downloadBtn?.classList.add('hidden');
+    }
+}
+
+function triggerOrderReceiptDownload(downloadUrl) {
+    const url = String(downloadUrl || '').trim();
+    if (!url) {
+        return Promise.resolve(false);
+    }
+
+    const saveBlob = (blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = blobUrl;
+        anchor.download = 'fasa-order-receipt.pdf';
+        anchor.rel = 'noopener';
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+    };
+
+    return fetch(url)
+        .then((res) => {
+            if (!res.ok) {
+                throw new Error('download failed');
+            }
+            return res.blob();
+        })
+        .then((blob) => {
+            saveBlob(blob);
+            return true;
+        })
+        .catch(() => {
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = 'fasa-order-receipt.pdf';
+            anchor.target = '_blank';
+            anchor.rel = 'noopener noreferrer';
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            return true;
+        });
+}
+
 function closeOrderFeedbackPopup() {
     const popup = document.getElementById('orderFeedbackPopup');
     if (!popup) return;
     popup.classList.add('hidden');
+    popup.querySelector('.order-feedback-popup__panel')?.classList.remove('order-feedback-popup__panel--success');
+    const titleEl = document.getElementById('orderFeedbackTitle');
+    if (titleEl) {
+        titleEl.textContent = 'Order Update';
+    }
+    restoreOrderFeedbackPopupChrome();
+}
+
+function ensurePendingOrderConfirmPopup() {
+    if (document.getElementById('pendingOrderConfirmPopup')) return;
+
+    document.body.insertAdjacentHTML('beforeend', `
+        <div class="order-feedback-popup hidden" id="pendingOrderConfirmPopup" role="dialog" aria-modal="true" aria-labelledby="pendingOrderConfirmTitle">
+            <div class="order-feedback-popup__backdrop" id="pendingOrderConfirmBackdrop"></div>
+            <div class="order-feedback-popup__panel" role="document">
+                <div class="order-feedback-popup__header">
+                    <h3 id="pendingOrderConfirmTitle">Pending order</h3>
+                </div>
+                <div class="order-feedback-popup__message" id="pendingOrderConfirmMessage"></div>
+                <div class="order-feedback-popup__actions order-feedback-popup__actions--split">
+                    <button type="button" class="order-feedback-popup__btn order-feedback-popup__btn--secondary" id="pendingOrderConfirmCancel">Cancel</button>
+                    <button type="button" class="order-feedback-popup__btn" id="pendingOrderConfirmReplace">Replace previous order</button>
+                </div>
+            </div>
+        </div>
+    `);
+}
+
+function closePendingOrderConfirmPopup() {
+    const popup = document.getElementById('pendingOrderConfirmPopup');
+    if (!popup) return;
+    popup.classList.add('hidden');
+    $(document).off('keydown.pendingOrderConfirm');
+}
+
+/**
+ * Shows a confirmation when the API reports an existing pending order for the same customer.
+ * @param {string} message Server message (shown as plain text in a paragraph).
+ * @param {number|null|undefined} existingOrderId Optional order id for display.
+ * @param {function(): void} onAccept User chose to replace the pending order with the new cart.
+ */
+function showPendingOrderReplaceConfirm(message, existingOrderId, onAccept) {
+    ensurePendingOrderConfirmPopup();
+    const popup = document.getElementById('pendingOrderConfirmPopup');
+    const messageEl = document.getElementById('pendingOrderConfirmMessage');
+    if (!popup || !messageEl) return;
+
+    pendingOrderReplaceAcceptHandler = typeof onAccept === 'function' ? onAccept : null;
+
+    const idLine = existingOrderId != null && String(existingOrderId).length
+        ? `<p class="pending-order-confirm__id">Existing order ID: <strong>${escapeHtml(String(existingOrderId))}</strong></p>`
+        : '';
+
+    messageEl.innerHTML = `<p class="pending-order-confirm__lead">${escapeHtml(String(message || ''))}</p>${idLine}`;
+
+    popup.classList.remove('hidden');
+
+    $(document).off('keydown.pendingOrderConfirm').on('keydown.pendingOrderConfirm', (e) => {
+        if (e.key === 'Escape') {
+            pendingOrderReplaceAcceptHandler = null;
+            closePendingOrderConfirmPopup();
+        }
+    });
+
+    const replaceBtn = document.getElementById('pendingOrderConfirmReplace');
+    replaceBtn?.focus();
+}
+
+function handleSuccessfulOrderSubmit(response, context) {
+    if (response && response.status === ORDER_STATUS_UPDATE_PENDING_FAILED) {
+        showApiResponsePopup(response.message || 'We could not update your previous order. Please try again.');
+        return;
+    }
+    const serverMessage = response?.message || 'Order submitted successfully.';
+    showOrderSuccessPopup(serverMessage, response);
+    if (context.mode === 'cart') {
+        localStorage.removeItem('cart');
+        renderCart();
+        updateCartBadge();
+        $('#cartSidepanel').removeClass('active');
+        $('#cartOverlay').removeClass('active');
+    } else if (context.mode === 'buyNow') {
+        closeBuyNowPopup();
+    }
+}
+
+function handleOrderSubmitFailure(xhr, items, deliveryDetails, priceOverrides) {
+    const waText = buildOrderWhatsAppText(items, deliveryDetails, priceOverrides, xhr);
+    openWhatsAppOrderFallback(waText);
+    showApiResponsePopup(ORDER_FAIL_WHATSAPP_USER_MESSAGE);
 }
 
 function getBuyNowItemFromPopup() {
@@ -1137,6 +1354,525 @@ function parseOrderIdFromSuccessMessage(message) {
     return m ? m[1] : '';
 }
 
+/** Numeric order id from POST /api/orders response (for receipt download). */
+function extractOrderIdFromResponse(response, fallbackMessage) {
+    if (response && typeof response === 'object') {
+        const keys = ['orderId', 'order_id', 'id'];
+        for (const k of keys) {
+            const v = response[k];
+            if (v != null && String(v).trim()) {
+                return String(v).trim();
+            }
+        }
+    }
+    return parseOrderIdFromSuccessMessage(fallbackMessage) || '';
+}
+
+/** Receipt PDF URL from POST /api/orders response (downloadUrl field). */
+function extractDownloadUrlFromResponse(response) {
+    if (response && typeof response === 'object') {
+        const keys = ['downloadUrl', 'download_url'];
+        for (const k of keys) {
+            const v = response[k];
+            if (v != null && String(v).trim()) {
+                const raw = String(v).trim();
+                if (/^https?:\/\//i.test(raw)) {
+                    return raw;
+                }
+                try {
+                    return new URL(raw, SPRING_BOOT_ORDER_API_URL).href;
+                } catch {
+                    return raw;
+                }
+            }
+        }
+    }
+    return '';
+}
+
+/**
+ * Public lookup value returned by POST /api/orders (order id or dedicated token).
+ * Adjust keys if your API uses different field names.
+ */
+function extractOrderTokenFromResponse(response, fallbackMessage) {
+    if (response && typeof response === 'object') {
+        const keys = ['orderToken', 'order_token', 'token', 'trackingToken', 'tracking_token', 'publicToken', 'public_token'];
+        for (const k of keys) {
+            const v = response[k];
+            if (v != null && String(v).trim()) {
+                return String(v).trim();
+            }
+        }
+        if (response.orderId != null && String(response.orderId).trim()) {
+            return String(response.orderId).trim();
+        }
+        if (response.id != null && String(response.id).trim()) {
+            return String(response.id).trim();
+        }
+    }
+    return parseOrderIdFromSuccessMessage(fallbackMessage) || '';
+}
+
+function buildOrderPublicStatusUrl(orderToken) {
+    const base = SPRING_BOOT_ORDER_API_URL.replace(/\/+$/, '');
+    const path = ORDER_PUBLIC_STATUS_PATH.startsWith('/') ? ORDER_PUBLIC_STATUS_PATH : `/${ORDER_PUBLIC_STATUS_PATH}`;
+    return `${base}${path}/${encodeURIComponent(String(orderToken || '').trim())}`;
+}
+
+function readTrackOrderTokenFromPage() {
+    if (typeof window.__FASA_ORDER_TOKEN__ === 'string' && window.__FASA_ORDER_TOKEN__.trim()) {
+        return window.__FASA_ORDER_TOKEN__.trim();
+    }
+    try {
+        const raw = new URLSearchParams(window.location.search).get('token');
+        if (raw != null && String(raw).trim()) return String(raw).trim();
+    } catch {
+        /* ignore */
+    }
+    try {
+        const stored = sessionStorage.getItem('fasa_track_token');
+        if (stored != null && String(stored).trim()) return String(stored).trim();
+    } catch {
+        /* ignore */
+    }
+    return '';
+}
+
+function stripTrackOrderTokenFromAddressBar() {
+    if (!window.location.search) return;
+    const path = window.location.pathname || '/track-order.html';
+    const cleanPath = /\/track-order\/?$/i.test(path) ? '/track-order' : path;
+    window.history.replaceState(null, document.title, cleanPath + (window.location.hash || ''));
+}
+
+async function fetchOrderStatusByToken(orderToken) {
+    const url = buildOrderPublicStatusUrl(orderToken);
+    console.log('Fetching order status from URL:', url);
+    const res = await fetch(url, {
+        method: 'GET',
+        headers: { Accept: 'application/json' }
+    });
+    const text = await res.text();
+    let data = null;
+    if (text) {
+        try {
+            data = JSON.parse(text);
+        } catch {
+            const err = new Error('Invalid JSON from orders API');
+            err.status = res.status;
+            err.parsererror = true;
+            throw err;
+        }
+    }
+    if (!res.ok) {
+        const err = new Error(
+            data && data.message != null ? String(data.message) : `HTTP ${res.status}`
+        );
+        err.status = res.status;
+        err.responseJSON = data;
+        throw err;
+    }
+    return data;
+}
+
+/** User-facing message when GET /public/{token} fails (see initTrackOrderPage). */
+function resolveOrderTrackFetchErrorMessage(err) {
+    const fromJson = err && err.responseJSON && err.responseJSON.message != null
+        ? String(err.responseJSON.message).trim()
+        : '';
+    if (fromJson) return fromJson;
+    if (err && err.message && !err.parsererror) {
+        const msg = String(err.message).trim();
+        if (msg && !/^HTTP \d+$/i.test(msg)) return msg;
+    }
+    const status = err && err.status;
+    if (status === 404) {
+        return 'No order found for that token.';
+    }
+    if (err && err.parsererror) {
+        return 'The server response was not valid JSON. Check that the track-order URL matches your fasa-orders-api public status endpoint.';
+    }
+    if (!status) {
+        return 'Could not reach the orders API (network error or browser blocked the request). If the API is on another host, configure CORS on fasa-orders-api and set SPRING_BOOT_ORDER_API_URL in script.js to the correct base URL.';
+    }
+    return `Could not load order status (HTTP ${status}). Please try again later.`;
+}
+
+/** Pipeline stages shown on the track-order page (matches backend OrderStatus, excluding REJECT). */
+const ORDER_PROGRESS_STAGES = [
+    { key: 'PENDING', title: 'Order received', hint: 'We have your order.' },
+    { key: 'PROCESSING', title: 'Processing', hint: 'Preparing your items.' },
+    { key: 'DELIVERED', title: 'Out for delivery', hint: 'On the way to you.' },
+    { key: 'DONE', title: 'Completed', hint: 'Delivered and closed.' }
+];
+
+function normalizeOrderStatusKey(statusRaw) {
+    const s = String(statusRaw || '').trim().toUpperCase();
+    if (!s) return 'PENDING';
+    if (s === 'REJECT' || s.includes('REJECT')) return 'REJECT';
+    if (s === 'PENDING') return 'PENDING';
+    if (s === 'PROCESSING') return 'PROCESSING';
+    if (s === 'DELIVERED') return 'DELIVERED';
+    if (s === 'DONE' || s === 'COMPLETED') return 'DONE';
+    const lower = String(statusRaw || '').trim().toLowerCase();
+    if (lower === 'pending') return 'PENDING';
+    if (lower === 'processing') return 'PROCESSING';
+    if (lower === 'delivered') return 'DELIVERED';
+    if (lower === 'done') return 'DONE';
+    if (lower === 'reject') return 'REJECT';
+    return 'PENDING';
+}
+
+function orderProgressStageIndex(statusKey) {
+    const k = normalizeOrderStatusKey(statusKey);
+    if (k === 'REJECT') return -1;
+    const idx = ORDER_PROGRESS_STAGES.findIndex((st) => st.key === k);
+    return idx >= 0 ? idx : 0;
+}
+
+function buildOrderProgressStagesHtml(statusRaw) {
+    const norm = normalizeOrderStatusKey(statusRaw);
+    if (norm === 'REJECT') {
+        return ''
+            + '<div class="order-track-reject" role="alert">'
+            + '<p class="order-track-reject__title">Order not fulfilled</p>'
+            + '<p class="order-track-reject__text">This order was cancelled or could not be completed. Please contact us if you need help.</p>'
+            + '</div>';
+    }
+    const activeIdx = orderProgressStageIndex(norm);
+    const allComplete = norm === 'DONE';
+    const items = ORDER_PROGRESS_STAGES.map((st, i) => {
+        let stateClass = 'order-track-stages__item--upcoming';
+        if (allComplete) {
+            stateClass = 'order-track-stages__item--done';
+        } else if (i < activeIdx) {
+            stateClass = 'order-track-stages__item--done';
+        } else if (i === activeIdx) {
+            stateClass = 'order-track-stages__item--current';
+        }
+        const isLast = i === ORDER_PROGRESS_STAGES.length - 1;
+        const bulletLabel = allComplete || i < activeIdx ? 'Completed' : i === activeIdx ? 'Current step' : 'Upcoming';
+        const showCheck = allComplete || i < activeIdx;
+        const mark = showCheck
+            ? '<span class="order-track-stages__check" aria-hidden="true">✓</span>'
+            : `<span class="order-track-stages__num" aria-hidden="true">${i + 1}</span>`;
+        const segBefore = i === 0
+            ? '<span class="order-track-stages__seg order-track-stages__seg--gap" aria-hidden="true"></span>'
+            : '<span class="order-track-stages__seg order-track-stages__seg--before" aria-hidden="true"></span>';
+        const segAfter = isLast
+            ? '<span class="order-track-stages__seg order-track-stages__seg--gap" aria-hidden="true"></span>'
+            : '<span class="order-track-stages__seg order-track-stages__seg--after" aria-hidden="true"></span>';
+        return ''
+            + `<li class="order-track-stages__item ${stateClass}" style="--st:${i}" role="listitem">`
+            + '<div class="order-track-stages__rail" aria-hidden="true">'
+            + segBefore
+            + `<span class="order-track-stages__bullet" title="${escapeHtml(bulletLabel)}">${mark}</span>`
+            + segAfter
+            + '</div>'
+            + '<div class="order-track-stages__body">'
+            + `<strong class="order-track-stages__title">${escapeHtml(st.title)}</strong>`
+            + `<span class="order-track-stages__hint">${escapeHtml(st.hint)}</span>`
+            + '</div>'
+            + '</li>';
+    }).join('');
+    return `<ol class="order-track-stages" role="list" aria-label="Order progress">${items}</ol>`;
+}
+
+function queueOrderStageAnimations(resultContainer) {
+    const root = resultContainer && resultContainer.querySelector('.order-track-stages');
+    if (!root) return;
+    root.classList.remove('order-track-stages--active');
+    window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+            root.classList.add('order-track-stages--active');
+        });
+    });
+}
+
+function orderTrackLineItemMarkerKeys() {
+    return [
+        'quantity', 'qty', 'count', 'itemQuantity', 'item_quantity',
+        'productName', 'product_name', 'name', 'title', 'itemName', 'item_name',
+        'label', 'productLabel', 'product_label',
+        'unitPrice', 'unit_price', 'price', 'itemPrice', 'item_price', 'lineTotal', 'line_total',
+        'productId', 'product_id', 'weight'
+    ];
+}
+
+function objectLooksLikeOrderLineItem(o) {
+    if (!o || typeof o !== 'object' || Array.isArray(o)) return false;
+    const markers = orderTrackLineItemMarkerKeys();
+    for (let i = 0; i < markers.length; i++) {
+        if (Object.prototype.hasOwnProperty.call(o, markers[i])) return true;
+    }
+    const prod = o.product ?? o.productEntity ?? o.product_entity;
+    if (prod && typeof prod === 'object' && !Array.isArray(prod)) {
+        for (let i = 0; i < markers.length; i++) {
+            if (Object.prototype.hasOwnProperty.call(prod, markers[i])) return true;
+        }
+    }
+    return false;
+}
+
+function discoverOrderLineItemsArray(root) {
+    if (!root || typeof root !== 'object') return [];
+    let best = [];
+    const keys = Object.keys(root);
+    for (let i = 0; i < keys.length; i++) {
+        const v = root[keys[i]];
+        if (!Array.isArray(v) || v.length === 0) continue;
+        const first = v.find((x) => x && typeof x === 'object' && !Array.isArray(x));
+        if (!first || !objectLooksLikeOrderLineItem(first)) continue;
+        if (v.length > best.length) best = v;
+    }
+    return best;
+}
+
+function normalizeOrderTrackItemsArray(d) {
+    if (!d || typeof d !== 'object') return [];
+    const tryArrays = [
+        d.items,
+        d.orderItemEntities,
+        d.order_item_entities,
+        d.orderItemEntityList,
+        d.order_item_entity_list,
+        d.orderItems,
+        d.order_items,
+        d.lineItems,
+        d.line_items,
+        d.orderLines,
+        d.order_lines,
+        d.cartItems,
+        d.cart_items,
+        d.productOrderItems,
+        d.product_order_items,
+        d.items
+    ];
+    for (let i = 0; i < tryArrays.length; i++) {
+        const raw = tryArrays[i];
+        if (Array.isArray(raw) && raw.length) return raw;
+    }
+    const nested = d.order && typeof d.order === 'object' && !Array.isArray(d.order) ? d.order : null;
+    if (nested) {
+        const inner = normalizeOrderTrackItemsArray(nested);
+        if (inner.length) return inner;
+    }
+    const found = discoverOrderLineItemsArray(d);
+    if (found.length) return found;
+    if (nested) {
+        const found2 = discoverOrderLineItemsArray(nested);
+        if (found2.length) return found2;
+    }
+    return [];
+}
+
+function parseFiniteNumber(v) {
+    if (v == null || v === '') return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+}
+
+function pickOrderLineField(o, keys) {
+    if (!o || typeof o !== 'object') return null;
+    for (let i = 0; i < keys.length; i++) {
+        const k = keys[i];
+        if (!Object.prototype.hasOwnProperty.call(o, k)) continue;
+        const val = o[k];
+        if (val == null) continue;
+        const s = String(val).trim();
+        if (s !== '') return val;
+    }
+    return null;
+}
+
+function resolveOrderLineProductName(it) {
+    const direct = pickOrderLineField(it, [
+        'productName', 'product_name', 'productTitle', 'product_title',
+        'name', 'title', 'itemName', 'item_name', 'label', 'productLabel', 'product_label',
+        'description'
+    ]);
+    if (direct != null) return String(direct).trim();
+    const prod = it.product ?? it.productEntity ?? it.product_entity;
+    if (prod && typeof prod === 'object' && !Array.isArray(prod)) {
+        const pn = pickOrderLineField(prod, ['name', 'title', 'productName', 'product_name']);
+        if (pn != null) return String(pn).trim();
+    }
+    const pid = pickOrderLineField(it, ['productId', 'product_id']);
+    if (pid != null) return `Product #${String(pid).trim()}`;
+    return '';
+}
+
+function formatOrderTrackMoney(amount) {
+    const n = parseFiniteNumber(amount);
+    if (n == null) return '';
+    return `Rs. ${n.toLocaleString()}`;
+}
+
+function buildOrderTrackItemsSectionHtml(d) {
+    const arr = normalizeOrderTrackItemsArray(d);
+    const lis = [];
+    for (let i = 0; i < arr.length; i++) {
+        const it = arr[i];
+        if (!it || typeof it !== 'object') continue;
+        let title = resolveOrderLineProductName(it);
+        const qty = parseFiniteNumber(pickOrderLineField(it, [
+            'quantity', 'qty', 'count', 'itemQuantity', 'item_quantity'
+        ]));
+        const unitNum = parseFiniteNumber(pickOrderLineField(it, [
+            'unitPrice', 'unit_price', 'priceEach', 'price_each', 'itemPrice', 'item_price', 'price'
+        ]));
+        let lineTotal = parseFiniteNumber(pickOrderLineField(it, [
+            'lineTotal', 'line_total', 'total', 'subtotal', 'amount', 'lineAmount', 'line_amount'
+        ]));
+        if (lineTotal == null && qty != null && unitNum != null) {
+            lineTotal = qty * unitNum;
+        }
+        const hasMoney = unitNum != null || lineTotal != null;
+        if (!title && (qty != null || hasMoney)) {
+            title = 'Item';
+        }
+        if (!title) continue;
+        const detailBits = [];
+        if (qty != null && qty > 0) {
+            detailBits.push(`Qty ${escapeHtml(String(qty))}`);
+        }
+        if (unitNum != null) {
+            detailBits.push(`${escapeHtml(formatOrderTrackMoney(unitNum))} each`);
+        }
+        if (lineTotal != null) {
+            detailBits.push(`<span class="order-track-items__line-total">${escapeHtml(formatOrderTrackMoney(lineTotal))}</span>`);
+        }
+        const detailHtml = detailBits.length
+            ? `<div class="order-track-items__detail">${detailBits.join(' · ')}</div>`
+            : '';
+        lis.push(
+            `<li class="order-track-items__item" role="listitem">`
+            + `<strong class="order-track-items__name">${escapeHtml(title)}</strong>`
+            + detailHtml
+            + '</li>'
+        );
+    }
+    if (!lis.length) return '';
+    return ''
+        + '<div class="order-track-items">'
+        + '<h3 class="order-track-items__heading">Order items</h3>'
+        + '<ul class="order-track-items__list" role="list">'
+        + lis.join('')
+        + '</ul>'
+        + '</div>';
+}
+
+function formatOrderStatusResultHtml(data) {
+    let d = data && typeof data === 'object' && !Array.isArray(data) ? data : {};
+    const inner = d.data ?? d.result ?? d.body ?? d.payload;
+    if (inner && typeof inner === 'object' && !Array.isArray(inner)) {
+        d = { ...d, ...inner };
+    }
+    const status = d.orderStatus ?? d.order_status ?? d.status ?? d.state ?? '';
+    const message = d.message != null ? String(d.message) : '';
+    const oid = d.orderId ?? d.order_id ?? d.id ?? '';
+    const statusStr = String(status).trim();
+    const messageStr = message.trim();
+    const showMsg = messageStr && messageStr !== statusStr;
+
+    let html = '';
+    html += buildOrderProgressStagesHtml(statusStr);
+
+    if (oid !== '' && oid != null) {
+        html += `<p class="order-track-result__meta">Order reference: <strong>${escapeHtml(String(oid))}</strong></p>`;
+    }
+    html += buildOrderTrackItemsSectionHtml(d);
+    if (showMsg) {
+        html += `<p class="order-track-result__msg">${escapeHtml(messageStr)}</p>`;
+    }
+    if (!html.trim()) {
+        html = '<p>Your order was found, but no status details were returned.</p>';
+    }
+    return html;
+}
+
+function initTrackOrderPage() {
+    if (trackOrderPageInitialized) {
+        return;
+    }
+
+    const bc = document.getElementById('breadcrumbProductName');
+    if (bc) {
+        bc.textContent = 'Track order';
+    }
+
+    const form = document.getElementById('orderTrackForm');
+    const input = document.getElementById('orderTrackTokenInput');
+    const resultEl = document.getElementById('orderTrackResult');
+    if (!form || !input || !resultEl) {
+        return;
+    }
+    trackOrderPageInitialized = true;
+
+    function setResult(html, modClass) {
+        resultEl.className = 'order-track-result' + (modClass ? ` order-track-result--${modClass}` : '');
+        resultEl.innerHTML = html;
+    }
+
+    async function lookup(token) {
+        const t = String(token || '').trim();
+        if (!t) {
+            setResult('<p>Please enter the order token from your confirmation email or screen.</p>', 'error');
+            return;
+        }
+        setResult('<p class="order-track-result__loading">Loading order status…</p>', 'loading');
+        try {
+            const data = await fetchOrderStatusByToken(t);
+            console.log('Order status data received:', data);
+            setResult(formatOrderStatusResultHtml(data), 'ok');
+            queueOrderStageAnimations(resultEl);
+            requestAnimationFrame(() => {
+                resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        } catch (err) {
+            console.error('Order status fetch failed', err);
+            const msg = resolveOrderTrackFetchErrorMessage(err);
+            setResult(`<p>${escapeHtml(String(msg))}</p>`, 'error');
+        }
+    }
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        lookup(input.value);
+    });
+
+    const urlToken = readTrackOrderTokenFromPage();
+    try {
+        sessionStorage.removeItem('fasa_track_token');
+    } catch {
+        /* ignore */
+    }
+    if (urlToken) {
+        input.value = urlToken;
+        window.__FASA_ORDER_TOKEN__ = urlToken;
+        if (window.location.search) {
+            stripTrackOrderTokenFromAddressBar();
+        }
+        lookup(urlToken);
+    }
+
+    window.FasaTrackOrderLookup = lookup;
+}
+
+function bootstrapTrackOrderPage() {
+    if (!document.body || !document.body.classList.contains('track-order-page')) {
+        return;
+    }
+    const run = () => initTrackOrderPage();
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', run, { once: true });
+    } else {
+        run();
+    }
+}
+
+bootstrapTrackOrderPage();
+
 function formatBusinessWhatsAppDisplay() {
     const d = normalizePhoneNumber(FASA_ORDERS_WHATSAPP_PHONE);
     if (d.startsWith('94') && d.length === 11) {
@@ -1152,29 +1888,51 @@ function buildWhatsAppInquiryUrl(orderId) {
     return `https://wa.me/${FASA_ORDERS_WHATSAPP_PHONE}?text=${encodeURIComponent(text)}`;
 }
 
-/** After successful checkout: server message plus save order ID + WhatsApp inquiry link. */
-function showOrderSuccessPopup(serverMessage) {
+/** After successful checkout: receipt download (tracking link is on the receipt). */
+function showOrderSuccessPopup(serverMessage, apiResponse = null) {
     ensureOrderFeedbackPopup();
     const popup = document.getElementById('orderFeedbackPopup');
     const messageEl = document.getElementById('orderFeedbackMessage');
+    const titleEl = document.getElementById('orderFeedbackTitle');
+    const panelEl = popup?.querySelector('.order-feedback-popup__panel');
     if (!popup || !messageEl) return;
 
     const primary = String(serverMessage || 'Order submitted successfully.');
-    const orderId = parseOrderIdFromSuccessMessage(primary);
-    const waUrl = buildWhatsAppInquiryUrl(orderId);
+    const orderId = extractOrderIdFromResponse(apiResponse, primary);
+    const orderToken = extractOrderTokenFromResponse(apiResponse, primary);
+    const downloadUrl = extractDownloadUrlFromResponse(apiResponse);
+    const waUrl = buildWhatsAppInquiryUrl(orderId || orderToken);
     const displayPhone = formatBusinessWhatsAppDisplay();
 
-    const idNote = orderId
-        ? ` Please save this order ID: <strong class="order-feedback-popup__order-id">${escapeHtml(orderId)}</strong>. For any inquiry, message us on WhatsApp and include this order ID.`
-        : ' Please keep a copy of your order confirmation. For any inquiry, message us on WhatsApp and include your order ID if you have it.';
+    if (titleEl) {
+        titleEl.textContent = 'Order confirmed';
+    }
+    panelEl?.classList.add('order-feedback-popup__panel--success');
+
+    const receiptMissingNote = !downloadUrl
+        ? '<p class="order-feedback-popup__receipt-missing">Receipt is not ready yet. Please save your order reference and contact us on WhatsApp if you need a copy.</p>'
+        : '';
 
     messageEl.innerHTML = ''
-        + `<div class="order-feedback-popup__msg-primary">${escapeHtml(primary)}</div>`
-        + '<div class="order-feedback-popup__extra" role="note">'
-        + `<p class="order-feedback-popup__extra-lead"><strong>Important:</strong>${idNote}</p>`
-        + `<p class="order-feedback-popup__extra-wa"><a class="order-feedback-popup__wa-link" href="${escapeHtml(waUrl)}" target="_blank" rel="noopener noreferrer">Message us on WhatsApp (${escapeHtml(displayPhone)})</a></p>`
+        + '<div class="order-feedback-popup__success" role="status">'
+        + '<div class="order-feedback-popup__success-badge" aria-hidden="true">✓</div>'
+        + '<p class="order-feedback-popup__success-headline">Thank you — we have your order!</p>'
+        + `<p class="order-feedback-popup__msg-primary">${escapeHtml(primary)}</p>`
+        + '<div class="order-feedback-popup__receipt-card">'
+        + '<p class="order-feedback-popup__receipt-hint">'
+        + 'Download and keep your receipt for your records. '
+        + '<strong>Use the link in your receipt to see your order status</strong> — '
+        + 'open the PDF anytime and tap that link for live delivery progress.'
+        + '</p>'
+        + receiptMissingNote
+        + '</div>'
+        + '<p class="order-feedback-popup__success-footer">'
+        + 'Questions about your order? '
+        + `<a class="order-feedback-popup__wa-link" href="${escapeHtml(waUrl)}" target="_blank" rel="noopener noreferrer">Message us on WhatsApp (${escapeHtml(displayPhone)})</a>`
+        + '</p>'
         + '</div>';
 
+    configureOrderSuccessPopupActions(downloadUrl);
     popup.classList.remove('hidden');
 }
 
@@ -1182,8 +1940,14 @@ function showApiResponsePopup(message) {
     ensureOrderFeedbackPopup();
     const popup = document.getElementById('orderFeedbackPopup');
     const messageEl = document.getElementById('orderFeedbackMessage');
+    const titleEl = document.getElementById('orderFeedbackTitle');
     if (!popup || !messageEl) return;
 
+    if (titleEl) {
+        titleEl.textContent = 'Order Update';
+    }
+    popup.querySelector('.order-feedback-popup__panel')?.classList.remove('order-feedback-popup__panel--success');
+    restoreOrderFeedbackPopupChrome();
     messageEl.textContent = String(message || 'Request completed.');
     popup.classList.remove('hidden');
 }
@@ -1312,9 +2076,10 @@ function setOrderSubmitLoading(loading, $buttons = null) {
     }
 }
 
-function submitOrderToSpringBoot(items, deliveryDetails = null, priceOverrides = null) {
+function submitOrderToSpringBoot(items, deliveryDetails = null, priceOverrides = null, submitOptions = null) {
     const safeItems = Array.isArray(items) ? items : [];
     const prices = resolvePricesForBackend(safeItems, deliveryDetails, priceOverrides);
+    const opts = submitOptions && typeof submitOptions === 'object' ? submitOptions : {};
     const payload = {
         orderSource: 'website',
         placedAt: new Date().toISOString(),
@@ -1327,7 +2092,8 @@ function submitOrderToSpringBoot(items, deliveryDetails = null, priceOverrides =
             quantity: Math.max(1, Number(item.quantity) || 1),
             weight: item.weight || ''
         })),
-        deliveryDetails: deliveryDetails || null
+        deliveryDetails: deliveryDetails || null,
+        replacePendingOrder: Boolean(opts.replacePendingOrder)
     };
 
     return $.ajax({
@@ -1385,18 +2151,36 @@ function checkout() {
     setOrderSubmitLoading(true, $checkoutBtn);
     submitOrderToSpringBoot(cart, deliveryDetails, priceOverrides)
         .done((response) => {
-            const serverMessage = response?.message || 'Order submitted successfully.';
-            showOrderSuccessPopup(serverMessage);
-            localStorage.removeItem('cart');
-            renderCart();
-            updateCartBadge();
-            $('#cartSidepanel').removeClass('active');
-            $('#cartOverlay').removeClass('active');
+            if (response && response.status === ORDER_STATUS_CONFIRM_PENDING) {
+                showPendingOrderReplaceConfirm(
+                    response.message,
+                    response.existingOrderId,
+                    () => {
+                        setOrderSubmitLoading(true, $checkoutBtn);
+                        submitOrderToSpringBoot(cart, deliveryDetails, priceOverrides, { replacePendingOrder: true })
+                            .done((r2) => {
+                                handleSuccessfulOrderSubmit(r2, { mode: 'cart' });
+                            })
+                            .fail((xhr) => {
+                                handleOrderSubmitFailure(xhr, cart, deliveryDetails, priceOverrides);
+                            })
+                            .always(() => {
+                                setOrderSubmitLoading(false, $checkoutBtn);
+                                const cartAfter = JSON.parse(localStorage.getItem('cart')) || [];
+                                if (cartAfter.length) {
+                                    refreshCartSummaryState(cartAfter);
+                                } else {
+                                    $('#checkoutBtn').prop('disabled', true);
+                                }
+                            });
+                    }
+                );
+                return;
+            }
+            handleSuccessfulOrderSubmit(response, { mode: 'cart' });
         })
         .fail((xhr) => {
-            const waText = buildOrderWhatsAppText(cart, deliveryDetails, priceOverrides, xhr);
-            openWhatsAppOrderFallback(waText);
-            showApiResponsePopup(ORDER_FAIL_WHATSAPP_USER_MESSAGE);
+            handleOrderSubmitFailure(xhr, cart, deliveryDetails, priceOverrides);
         })
         .always(() => {
             setOrderSubmitLoading(false, $checkoutBtn);
@@ -1410,6 +2194,24 @@ function checkout() {
 }
 
 $(document).ready(function() {
+
+    $(document).off('click', '#pendingOrderConfirmReplace').on('click', '#pendingOrderConfirmReplace', function () {
+        const popup = document.getElementById('pendingOrderConfirmPopup');
+        if (!popup || popup.classList.contains('hidden')) return;
+        const fn = pendingOrderReplaceAcceptHandler;
+        pendingOrderReplaceAcceptHandler = null;
+        closePendingOrderConfirmPopup();
+        if (typeof fn === 'function') {
+            fn();
+        }
+    });
+
+    $(document).off('click', '#pendingOrderConfirmCancel, #pendingOrderConfirmBackdrop').on('click', '#pendingOrderConfirmCancel, #pendingOrderConfirmBackdrop', function () {
+        const popup = document.getElementById('pendingOrderConfirmPopup');
+        if (!popup || popup.classList.contains('hidden')) return;
+        pendingOrderReplaceAcceptHandler = null;
+        closePendingOrderConfirmPopup();
+    });
 
     $(document).off('click', '#addToCart').on('click', '#addToCart', function() {
         const id = $(this).data('id');
@@ -1548,14 +2350,31 @@ $(document).ready(function() {
         setOrderSubmitLoading(true, $submitButton);
         submitOrderToSpringBoot([buyNowItem], deliveryDetails, buyNowPriceOverrides)
             .done((response) => {
-                const serverMessage = response?.message || 'Order submitted successfully.';
-                showOrderSuccessPopup(serverMessage);
-                closeBuyNowPopup();
+                if (response && response.status === ORDER_STATUS_CONFIRM_PENDING) {
+                    showPendingOrderReplaceConfirm(
+                        response.message,
+                        response.existingOrderId,
+                        () => {
+                            setOrderSubmitLoading(true, $submitButton);
+                            submitOrderToSpringBoot([buyNowItem], deliveryDetails, buyNowPriceOverrides, { replacePendingOrder: true })
+                                .done((r2) => {
+                                    handleSuccessfulOrderSubmit(r2, { mode: 'buyNow' });
+                                })
+                                .fail((xhr) => {
+                                    handleOrderSubmitFailure(xhr, [buyNowItem], deliveryDetails, buyNowPriceOverrides);
+                                })
+                                .always(() => {
+                                    setOrderSubmitLoading(false, $submitButton);
+                                    updateBuyNowSubmitButtonState();
+                                });
+                        }
+                    );
+                    return;
+                }
+                handleSuccessfulOrderSubmit(response, { mode: 'buyNow' });
             })
             .fail((xhr) => {
-                const waText = buildOrderWhatsAppText([buyNowItem], deliveryDetails, buyNowPriceOverrides, xhr);
-                openWhatsAppOrderFallback(waText);
-                showApiResponsePopup(ORDER_FAIL_WHATSAPP_USER_MESSAGE);
+                handleOrderSubmitFailure(xhr, [buyNowItem], deliveryDetails, buyNowPriceOverrides);
             })
             .always(() => {
                 setOrderSubmitLoading(false, $submitButton);
@@ -1586,11 +2405,36 @@ $(document).ready(function() {
 
     $(document).off('click', '#orderFeedbackClose, #orderFeedbackOk, #orderFeedbackBackdrop')
         .on('click', '#orderFeedbackClose, #orderFeedbackOk, #orderFeedbackBackdrop', function() {
+            const panel = document.querySelector('#orderFeedbackPopup .order-feedback-popup__panel');
+            if (panel?.classList.contains('order-feedback-popup__panel--success')) {
+                return;
+            }
             closeOrderFeedbackPopup();
         });
 
+    $(document).off('click', '#orderFeedbackDownloadReceipt').on('click', '#orderFeedbackDownloadReceipt', function() {
+        const popup = document.getElementById('orderFeedbackPopup');
+        const url = popup?.dataset.receiptDownloadUrl || '';
+        if (!url) return;
+
+        const btn = this;
+        const prevHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = 'Downloading…';
+
+        triggerOrderReceiptDownload(url).finally(() => {
+            closeOrderFeedbackPopup();
+            btn.disabled = false;
+            btn.innerHTML = prevHtml;
+        });
+    });
+
     $(document).off('keydown', '#orderFeedbackPopup').on('keydown', '#orderFeedbackPopup', function(event) {
         if (event.key === 'Escape') {
+            const panel = this.querySelector('.order-feedback-popup__panel');
+            if (panel?.classList.contains('order-feedback-popup__panel--success')) {
+                return;
+            }
             closeOrderFeedbackPopup();
         }
     });

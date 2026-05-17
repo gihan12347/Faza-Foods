@@ -1,0 +1,6 @@
+# Netlify rewrites (same behaviour as serve.json). Status 200 = rewrite, query string is kept.
+/product       /product.html       200
+/track-order   /track-order.html   200
+
+# Short tracking link → track-order page (token in ?token= is preserved)
+/order-status  /track-order.html   200

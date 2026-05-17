@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order status — Fasa Products</title>
+    <link rel="icon" type="image/jpeg" href="/public/images/fasa-logo.jpeg">
+    <script>
+        (function () {
+            var search = window.location.search || '';
+            var hash = window.location.hash || '';
+            try {
+                var p = new URLSearchParams(search);
+                var t = p.get('token');
+                if (t) {
+                    t = String(t).trim();
+                    if (t) {
+                        window.__FASA_ORDER_TOKEN__ = t;
+                        try { sessionStorage.setItem('fasa_track_token', t); } catch (e) { /* ignore */ }
+                    }
+                }
+            } catch (e) { /* ignore */ }
+            window.location.replace('track-order' + search + hash);
+        })();
+    </script>
+</head>
+<body>
+    <p style="font-family: system-ui, sans-serif; text-align: center; margin-top: 3rem;">Opening order tracking…</p>
+</body>
+</html>
