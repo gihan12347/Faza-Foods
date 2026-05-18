@@ -646,32 +646,6 @@
     },
     {
       "ingredients": [
-        "Chicken",
-        "Sesame Oil",
-        "Garlic",
-        "Curry Leaves",
-        "Spices",
-        "Salt"
-      ],
-      "useFor": [
-        "Can eat as a sidedish."
-      ],
-      "price": 800,
-      "name": "Chicken Pickle",
-      "isBestSeller": false,
-      "originalPrice": 800,
-      "images": [
-        "/public/images/chicken-pickle.png"
-      ],
-      "weight": "100g",
-      "id": 29,
-      "image": "/public/images/chicken-pickle.png",
-      "howToUse": "Can have with rice,rotting,bread etc",
-      "description": "",
-      "category": "Special Homemade Items"
-    },
-    {
-      "ingredients": [
         "Coriander",
         "Sweet Cumin",
         "Cumin",
@@ -728,6 +702,56 @@
       "howToUse": "",
       "description": "",
       "category": "Cosmetics Products"
+    },
+    {
+      "ingredients": [
+        "Apple",
+        "Beetroot",
+        "Carrot",
+        "Nuts",
+        "Cardamom"
+      ],
+      "useFor": [
+        "Increase Hb level",
+        "Brighten skin"
+      ],
+      "price": 720,
+      "name": "ABC Malt",
+      "isBestSeller": false,
+      "originalPrice": 800,
+      "images": [
+        "/public/images/abc-malt.jpeg"
+      ],
+      "weight": "50g",
+      "id": 16,
+      "image": "/public/images/abc-malt.jpeg",
+      "howToUse": "Mix with hot milk and serve",
+      "description": "Malt mix to increase hemoglobin and brighten skin.",
+      "category": "Healthy Food & Traditional Mixes"
+    },
+    {
+      "ingredients": [
+        "Jawwarisi",
+        "Salt",
+        "Chili flake",
+        "Cumin"
+      ],
+      "useFor": [
+        "Making snack"
+      ],
+      "price": 200,
+      "name": "Jawwarisi Papadam",
+      "isBestSeller": false,
+      "originalPrice": 200,
+      "images": [
+        "/public/images/javvarisi-papadam.jpeg"
+      ],
+      "weight": "50g",
+      "id": 13,
+      "image": "/public/images/javvarisi-papadam.jpeg",
+      "howToUse": "Fry in hot oil",
+      "description": "Healthy snack made from jawwarisi.",
+      "category": "Healthy Food & Traditional Mixes"
     }
   ]
 }
