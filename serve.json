@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/track-order", "destination": "/track-order.html" },
+    { "source": "/product", "destination": "/product.html" }
+  ]
+}
