@@ -1,7 +1,7 @@
 let products = [];
 
 /** Order API: POST + public GET contract — see reference/fasa-orders-api/README.txt */
-const SPRING_BOOT_ORDER_API_URL = 'http://localhost:8082/api/orders';
+const SPRING_BOOT_ORDER_API_URL = 'https://helpful-liberation-production-ed7d.up.railway.app/api/orders';
 /** Public read-only status by token (fasa-orders-api GET …/public/{token}). */
 const ORDER_PUBLIC_STATUS_PATH = '/public';
 /** Business WhatsApp (digits only, country code). Keep in sync with footer wa.me links. */
