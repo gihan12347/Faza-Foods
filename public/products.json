@@ -469,10 +469,10 @@
       "useFor": [
         "Cooking recipes"
       ],
-      "price": 450,
+      "price": 550,
       "name": "Curry Powder",
       "isBestSeller": false,
-      "originalPrice": 450,
+      "originalPrice": 550,
       "images": [
         "/public/images/curry-powder.jpeg"
       ],
