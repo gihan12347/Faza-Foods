@@ -313,10 +313,10 @@
       "useFor": [
         "Healthy snacks"
       ],
-      "price": 450,
+      "price": 500,
       "name": "Health Mix",
       "isBestSeller": false,
-      "originalPrice": 450,
+      "originalPrice": 500,
       "images": [
         "/public/images/health-mix.jpeg"
       ],
