@@ -408,10 +408,10 @@
       "useFor": [
         "Chicken curry"
       ],
-      "price": 150,
+      "price": 160,
       "name": "Chicken Masala",
       "isBestSeller": false,
-      "originalPrice": 150,
+      "originalPrice": 160,
       "images": [
         "/public/images/chicken-masala.jpeg"
       ],
