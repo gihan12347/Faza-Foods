@@ -375,10 +375,10 @@
       "useFor": [
         "Beef curry"
       ],
-      "price": 160,
+      "price": 170,
       "name": "Beef Masala",
       "isBestSeller": false,
-      "originalPrice": 160,
+      "originalPrice": 170,
       "images": [
         "/public/images/beef-masala.jpeg"
       ],
