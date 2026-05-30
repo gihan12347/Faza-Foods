@@ -582,10 +582,10 @@
       "useFor": [
         "Cooking recipes"
       ],
-      "price": 230,
+      "price": 250,
       "name": "Pepper Powder",
       "isBestSeller": false,
-      "originalPrice": 230,
+      "originalPrice": 250,
       "images": [
         "/public/images/pepper-powder.png"
       ],
