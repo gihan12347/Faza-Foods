@@ -439,10 +439,10 @@
       "useFor": [
         "Biriyani recipes"
       ],
-      "price": 300,
+      "price": 320,
       "name": "Biriyani Masala",
       "isBestSeller": true,
-      "originalPrice": 300,
+      "originalPrice": 320,
       "images": [
         "/public/images/biriyani-masala.jpeg"
       ],
