@@ -752,6 +752,30 @@
       "howToUse": "Mix with hot milk and serve",
       "description": "Malt mix to increase hemoglobin and brighten skin.",
       "category": "Healthy Food & Traditional Mixes"
+    },
+    {
+      "ingredients": [
+        "Lemon",
+        "Chili",
+        "Chili flakes",
+        "Salt"
+      ],
+      "useFor": [
+        "Eating with rice"
+      ],
+      "price": 500,
+      "name": "Lime Pickle",
+      "isBestSeller": false,
+      "originalPrice": 500,
+      "images": [
+        "/public/images/lime-pickle.jpeg"
+      ],
+      "weight": "250g",
+      "id": 3,
+      "image": "/public/images/lime-pickle.jpeg",
+      "howToUse": "Serve with rice or rotti",
+      "description": "Traditional homemade lime pickle.",
+      "category": "Special Homemade Items"
     }
   ]
 }
