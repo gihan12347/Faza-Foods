@@ -172,10 +172,10 @@
       "useFor": [
         "Brushing teeth"
       ],
-      "price": 150,
+      "price": 200,
       "name": "Tooth Powder",
       "isBestSeller": false,
-      "originalPrice": 150,
+      "originalPrice": 200,
       "images": [
         "/public/images/tooth-powder.jpeg"
       ],
