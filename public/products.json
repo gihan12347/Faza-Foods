@@ -254,10 +254,10 @@
       "useFor": [
         "Brightening face"
       ],
-      "price": 700,
+      "price": 800,
       "name": "Face Mask",
       "isBestSeller": false,
-      "originalPrice": 700,
+      "originalPrice": 800,
       "images": [
         "/public/images/face-mask.jpeg"
       ],
