@@ -490,10 +490,10 @@
       "useFor": [
         "Cooking recipes"
       ],
-      "price": 400,
+      "price": 550,
       "name": "Chili Powder",
       "isBestSeller": false,
-      "originalPrice": 400,
+      "originalPrice": 550,
       "images": [
         "/public/images/chilli-powder.jpeg"
       ],
