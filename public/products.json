@@ -124,10 +124,10 @@
       "useFor": [
         "Spicy porridge"
       ],
-      "price": 270,
+      "price": 300,
       "name": "Kodhipaal",
       "isBestSeller": false,
-      "originalPrice": 270,
+      "originalPrice": 300,
       "images": [
         "/public/images/kodhipaal.jpeg"
       ],
