@@ -609,10 +609,10 @@
       "useFor": [
         "Porridge for babies"
       ],
-      "price": 700,
+      "price": 800,
       "name": "Grow Fast Mix",
       "isBestSeller": true,
-      "originalPrice": 700,
+      "originalPrice": 800,
       "images": [
         "/public/images/grow-fast.jpeg"
       ],
