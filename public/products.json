@@ -514,10 +514,10 @@
         "Increase weight",
         "Increase immunity"
       ],
-      "price": 500,
+      "price": 600,
       "name": "Banana Powder",
       "isBestSeller": false,
-      "originalPrice": 500,
+      "originalPrice": 600,
       "images": [
         "/public/images/banana-mix.jpeg"
       ],
