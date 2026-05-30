@@ -11,10 +11,10 @@
         "Increase immunity",
         "Increase calcium"
       ],
-      "price": 320,
+      "price": 370,
       "name": "Sprouted Ragi Mix",
       "isBestSeller": true,
-      "originalPrice": 320,
+      "originalPrice": 370,
       "images": [
         "/public/images/sprouted-ragi-mix.png"
       ],
