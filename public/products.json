@@ -231,10 +231,10 @@
       "useFor": [
         "Cure hair problems"
       ],
-      "price": 1700,
+      "price": 1850,
       "name": "Hair Oil",
       "isBestSeller": false,
-      "originalPrice": 1700,
+      "originalPrice": 1849,
       "images": [
         "/public/images/oil.jpeg"
       ],
@@ -697,18 +697,18 @@
       "description": "",
       "category": "Masalas & Cooking Essentials"
     },
- {
+    {
       "ingredients": [
-       "Shihaka", 
-       "Soap Nut", 
-       "Fenugreek", 
-       "Clove", 
-       "Green Gram", 
-       "Vetiver", 
-       "Henna", 
-       "Hibiscus", 
-       "Curry Leaves", 
-       "Nelli"
+        "Shihaka",
+        "Soap Nut",
+        "Fenugreek",
+        "Clove",
+        "Green Gram",
+        "Vetiver",
+        "Henna",
+        "Hibiscus",
+        "Curry Leaves",
+        "Nelli"
       ],
       "useFor": [
         "As a cosmetic product."
