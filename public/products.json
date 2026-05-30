@@ -278,10 +278,10 @@
       "useFor": [
         "Making snack"
       ],
-      "price": 200,
+      "price": 280,
       "name": "Jawwarisi Papadam",
       "isBestSeller": false,
-      "originalPrice": 200,
+      "originalPrice": 280,
       "images": [
         "/public/images/javvarisi-papadam.jpeg"
       ],
