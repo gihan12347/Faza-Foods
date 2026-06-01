@@ -707,8 +707,10 @@ function getShippingFee(items, deliveryDetails) {
             return 0;
         } else if (totalWeightKg <= 2) {
             return 250;
+        } else if (totalWeightKg <= 3) {
+            return 400;
         } else {
-            return 350;
+            return 550;
         }
     }
 
