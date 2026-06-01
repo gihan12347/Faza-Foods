@@ -683,17 +683,6 @@ function getShippingFee(items, deliveryDetails) {
     if (deliveryTypeKey === 'courier' && Array.isArray(items) && items.length === 1) {
         const [item] = items;
         const itemName = String(item?.name || '').trim().toLowerCase();
-        const quantity = Math.max(1, Number(item?.quantity) || 1);
-        const isHairOil = itemName === 'hair oil' || itemName.includes('hair oil');
-
-        if (isHairOil) {
-            return quantity > 1 ? 0 : 250;
-        }
-    }
-
-    if (deliveryTypeKey === 'courier' && Array.isArray(items) && items.length === 1) {
-        const [item] = items;
-        const itemName = String(item?.name || '').trim().toLowerCase();
         const quantity = Math.max(1, Number(item?.quantity) || 1);    
         console.log('Checking single-item courier discount for item:', itemName, 'quantity:', quantity);
         if (itemName === 'kumkumadhi thailam') {
