@@ -696,9 +696,7 @@ function getShippingFee(items, deliveryDetails) {
         const itemName = String(item?.name || '').trim().toLowerCase();
         const quantity = Math.max(1, Number(item?.quantity) || 1);    
         console.log('Checking single-item courier discount for item:', itemName, 'quantity:', quantity);
-        if (itemName === 'hair oil') {
-            return quantity > 1 ? 0 : 250;
-        } else if (itemName === 'kumkumadhi thailam') {
+        if (itemName === 'kumkumadhi thailam') {
             return 0;
         }
     }
