@@ -679,6 +679,10 @@ function getShippingFee(items, deliveryDetails) {
         return 0;
     }
     const deliveryTypeKey = normalizeDeliveryType(deliveryDetails.deliveryType);
+    const isContainHairOil = Array.isArray(items) && items.some(item =>
+        String(item?.name || '').toLowerCase().includes('hair oil')
+    );
+    console.log('Checking for hair oil in cart:', isContainHairOil);
 
     if (deliveryTypeKey === 'courier' && Array.isArray(items) && items.length === 1) {
         const [item] = items;
@@ -696,6 +700,17 @@ function getShippingFee(items, deliveryDetails) {
 
     const totalWeightKg = getCartWeightKg(items);
     const billableKg = Math.max(1, Math.ceil(totalWeightKg));
+    console.log('Total cart weight (kg):', totalWeightKg);
+
+    if (isContainHairOil && deliveryTypeKey === 'courier') {
+        if(totalWeightKg <= 1) {
+            return 0;
+        } else if (totalWeightKg <= 2) {
+            return 250;
+        } else {
+            return 350;
+        }
+    }
 
     if (billableKg <= 3) {
         return rates[billableKg - 1];
