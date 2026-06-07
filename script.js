@@ -11,6 +11,8 @@ const FASA_ORDERS_WHATSAPP_PHONE = '94767486675';
 /** Digits only, after stripping non-digits (e.g. 0771234567). */
 const ORDER_PHONE_DIGIT_LENGTH = 10;
 const ORDER_SUBMIT_SPINNER_SRC = '/public/images/cart.gif';
+const PRODUCTS_LOADING_TITLE = 'Preparing your catalog';
+const PRODUCTS_LOADING_MESSAGE = 'Fetching products from our store…';
 const ORDER_FAIL_WHATSAPP_USER_MESSAGE = 'We could not submit your order online. WhatsApp should open with your order details — please send that message to Fasa Products to confirm your order. If WhatsApp did not open, check your popup blocker or contact us from the site footer.';
 /** Spring order API: same customer already has a pending order; show replace confirmation. */
 const ORDER_STATUS_CONFIRM_PENDING = 'CONFIRM_PENDING_ORDER';
@@ -58,6 +60,87 @@ const SRI_LANKA_DISTRICTS = [
     'Mullaitivu', 'Nuwara Eliya', 'Polonnaruwa', 'Puttalam', 'Ratnapura',
     'Trincomalee', 'Vavuniya'
 ];
+
+function ensureProductsLoadingOverlay() {
+    if (document.getElementById('productsLoadingOverlay')) {
+        return;
+    }
+
+    document.body.insertAdjacentHTML('beforeend', `
+        <div id="productsLoadingOverlay" class="catalog-loading-curtain hidden" role="status" aria-live="polite" aria-busy="false" aria-hidden="true">
+            <div class="catalog-loading-curtain__veil" aria-hidden="true"></div>
+            <div class="catalog-loading-curtain__panel">
+                <div class="catalog-loading-curtain__brand">
+                    <img src="/public/images/fasa-logo.jpeg" alt="" class="catalog-loading-curtain__logo" width="120" height="48">
+                    <span class="catalog-loading-curtain__brand-name">Fasa Products</span>
+                </div>
+                <div class="catalog-loading-curtain__spinner" aria-hidden="true">
+                    <span class="catalog-loading-curtain__ring"></span>
+                    <img src="${ORDER_SUBMIT_SPINNER_SRC}" alt="" class="catalog-loading-curtain__gif" width="72" height="72">
+                </div>
+                <p class="catalog-loading-curtain__title">${PRODUCTS_LOADING_TITLE}</p>
+                <p class="catalog-loading-curtain__hint">${PRODUCTS_LOADING_MESSAGE}</p>
+                <div class="catalog-loading-curtain__dots" aria-hidden="true">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+        </div>
+    `);
+}
+
+/** Full-page curtain while GET /api/products is in flight. */
+function setProductsLoading(loading, message) {
+    ensureProductsLoadingOverlay();
+    const overlay = document.getElementById('productsLoadingOverlay');
+    if (!overlay) {
+        return;
+    }
+
+    const hintEl = overlay.querySelector('.catalog-loading-curtain__hint');
+    if (hintEl && message) {
+        hintEl.textContent = message;
+    } else if (hintEl && loading) {
+        hintEl.textContent = PRODUCTS_LOADING_MESSAGE;
+    }
+
+    if (loading) {
+        overlay.classList.remove('hidden', 'catalog-loading-curtain--closing');
+        overlay.setAttribute('aria-busy', 'true');
+        overlay.setAttribute('aria-hidden', 'false');
+    } else {
+        overlay.classList.add('catalog-loading-curtain--closing');
+        window.setTimeout(() => {
+            if (!overlay.classList.contains('catalog-loading-curtain--closing')) {
+                return;
+            }
+            overlay.classList.add('hidden');
+            overlay.classList.remove('catalog-loading-curtain--closing');
+            overlay.setAttribute('aria-busy', 'false');
+            overlay.setAttribute('aria-hidden', 'true');
+        }, 220);
+    }
+
+    document.body.classList.toggle('products-catalog-loading-open', Boolean(loading));
+}
+
+function showProductsCatalogLoadError() {
+    const message = '<p class="products-load-error">We could not load products right now. Please check your connection, ensure the store API is running, and <a href="javascript:location.reload()">try again</a>.</p>';
+
+    if (isProductDetailsPage()) {
+        const content = document.getElementById('productDetailsContent');
+        if (content) {
+            content.innerHTML = message;
+        }
+        return;
+    }
+
+    ['bestSellersGrid', 'offersGrid', 'productsGrid', 'outOfStockGrid'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.innerHTML = message;
+        }
+    });
+}
 
 async function loadProducts() {
     try {
@@ -589,51 +672,56 @@ async function init() {
         return;
     }
 
-    // Load products data
-    await loadProducts();
+    setProductsLoading(true);
 
-    // Update cart badge on page load
-    updateCartBadge();
+    try {
+        await loadProducts();
 
-    // Initialize mobile menu
-    initMobileMenu();
-    
-    // Initialize smooth scrolling
-    initSmoothScrolling();
+        if (!products.length) {
+            showProductsCatalogLoadError();
+            return;
+        }
 
-    // Initialize scroll-to-top button
-    initScrollToTopButton();
-    
-    if (isProductDetailsPage()) {
-        loadProductDetails();
-        return;
-    }
+        updateCartBadge();
+        initMobileMenu();
+        initSmoothScrolling();
+        initScrollToTopButton();
 
-    const inStock = getInStockProducts();
-    const bestSellers = inStock.filter(p => p.isBestSeller);
-    const offers = inStock.filter(p => p.originalPrice > p.price);
+        if (isProductDetailsPage()) {
+            loadProductDetails();
+            return;
+        }
 
-    if (bestSellers.length) {
-        renderProducts(bestSellers, 'bestSellersGrid');
-    }
-    if (offers.length) {
-        renderProducts(offers, 'offersGrid');
-    } else {
-        const offersEl = document.getElementById('offers');
-        offersEl.style.display = 'none';
-        document.querySelector('a[href="#offers"]')?.closest('li')?.remove();
-    }
-    renderProducts(inStock, 'productsGrid');
-    renderOutOfStockSection();
+        const inStock = getInStockProducts();
+        const bestSellers = inStock.filter(p => p.isBestSeller);
+        const offers = inStock.filter(p => p.originalPrice > p.price);
 
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    filterButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            filterButtons.forEach(btn => btn.classList.remove('active'));
-            this.classList.add('active');
-            filterProducts(this.dataset.filter);
+        if (bestSellers.length) {
+            renderProducts(bestSellers, 'bestSellersGrid');
+        }
+        if (offers.length) {
+            renderProducts(offers, 'offersGrid');
+        } else {
+            const offersEl = document.getElementById('offers');
+            if (offersEl) {
+                offersEl.style.display = 'none';
+            }
+            document.querySelector('a[href="#offers"]')?.closest('li')?.remove();
+        }
+        renderProducts(inStock, 'productsGrid');
+        renderOutOfStockSection();
+
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                filterProducts(this.dataset.filter);
+            });
         });
-    });
+    } finally {
+        setProductsLoading(false);
+    }
 }
 
 function applyOutOfStockProductActions(product) {
