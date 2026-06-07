@@ -10,7 +10,7 @@ const ORDER_PUBLIC_STATUS_PATH = '/public';
 const FASA_ORDERS_WHATSAPP_PHONE = '94767486675';
 /** Digits only, after stripping non-digits (e.g. 0771234567). */
 const ORDER_PHONE_DIGIT_LENGTH = 10;
-const ORDER_SUBMIT_SPINNER_SRC = '/public/images/cart.gif';
+const CART_LOADING_ICON_SRC = '/public/images/cart.png';
 const PRODUCTS_LOADING_TITLE = 'Preparing your catalog';
 const PRODUCTS_LOADING_MESSAGE = 'Fetching products from our store…';
 const ORDER_FAIL_WHATSAPP_USER_MESSAGE = 'We could not submit your order online. WhatsApp should open with your order details — please send that message to Fasa Products to confirm your order. If WhatsApp did not open, check your popup blocker or contact us from the site footer.';
@@ -76,7 +76,7 @@ function ensureProductsLoadingOverlay() {
                 </div>
                 <div class="catalog-loading-curtain__spinner" aria-hidden="true">
                     <span class="catalog-loading-curtain__ring"></span>
-                    <img src="${ORDER_SUBMIT_SPINNER_SRC}" alt="" class="catalog-loading-curtain__gif" width="72" height="72">
+                    <img src="${CART_LOADING_ICON_SRC}" alt="" class="catalog-loading-curtain__cart-icon" width="40" height="40">
                 </div>
                 <p class="catalog-loading-curtain__title">${PRODUCTS_LOADING_TITLE}</p>
                 <p class="catalog-loading-curtain__hint">${PRODUCTS_LOADING_MESSAGE}</p>
@@ -2285,14 +2285,17 @@ function ensureOrderLoadingOverlay() {
     document.body.insertAdjacentHTML('beforeend', `
         <div id="orderLoadingOverlay" class="order-loading-overlay hidden" role="status" aria-live="polite" aria-busy="false" aria-hidden="true">
             <div class="order-loading-overlay__card">
-                <img src="${ORDER_SUBMIT_SPINNER_SRC}" alt="" class="order-loading-overlay__gif" width="88" height="88">
+                <div class="order-loading-overlay__spinner" aria-hidden="true">
+                    <span class="order-loading-overlay__ring"></span>
+                    <img src="${CART_LOADING_ICON_SRC}" alt="" class="order-loading-overlay__cart-icon" width="44" height="44">
+                </div>
                 <p class="order-loading-overlay__text">Submitting your order…</p>
             </div>
         </div>
     `);
 }
 
-/** Full-viewport curtain + cart gif; optionally disables primary submit button(s). */
+/** Full-viewport curtain + cart spinner; optionally disables primary submit button(s). */
 function setOrderSubmitLoading(loading, $buttons = null) {
     ensureOrderLoadingOverlay();
     const overlay = document.getElementById('orderLoadingOverlay');
