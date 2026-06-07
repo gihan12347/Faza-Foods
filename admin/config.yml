@@ -84,6 +84,12 @@ collections:
                 widget: "boolean"
                 default: false
 
+              - label: "Stock quantity"
+                name: "stock"
+                widget: "number"
+                required: false
+                hint: "Leave empty if always available. Set 0 or less to mark out of stock."
+
               - label: "Ingredients"
                 name: "ingredients"
                 widget: "list"

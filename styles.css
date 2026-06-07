@@ -521,6 +521,33 @@ ul {
   background-color: #e74c3c;
 }
 
+.product-badge.out-of-stock {
+  background-color: #5a6b52;
+  right: auto;
+  left: 1rem;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+.product-badge.out-of-stock.product-badge--inline {
+  position: static;
+  display: inline-block;
+  margin-left: 0.75rem;
+  vertical-align: middle;
+  padding: 0.35rem 0.65rem;
+}
+
+.product-card--out-of-stock .product-image {
+  opacity: 0.72;
+  filter: grayscale(0.35);
+}
+
+.product-card--out-of-stock:hover {
+  transform: none;
+  box-shadow: var(--shadow);
+}
+
 .product-info {
   padding: 1.5rem;
   flex-grow: 1;
@@ -766,6 +793,14 @@ ul {
 
 .home-page .best-sellers {
   background: linear-gradient(180deg, var(--bg-white) 0%, var(--green-mist) 100%);
+}
+
+.home-page .out-of-stock {
+  background: linear-gradient(180deg, rgba(90, 106, 82, 0.06) 0%, var(--bg-white) 100%);
+}
+
+.home-page .out-of-stock.hidden {
+  display: none;
 }
 
 .home-page .offers {
@@ -1320,6 +1355,54 @@ body.product-page .breadcrumb-list {
 
 .product-info-detail .product-actions .btn-secondary:hover::before {
   background-color: var(--logo-dark);
+}
+
+.product-out-of-stock-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin: 0.5rem 0 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fff8e6, #fff3cd);
+  border: 1px solid rgba(180, 140, 40, 0.45);
+}
+
+.product-out-of-stock-notice.hidden {
+  display: none;
+}
+
+.product-out-of-stock-notice__icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  background: #b45309;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: 0.1rem;
+}
+
+.product-out-of-stock-notice__text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #5c4a1a;
+}
+
+.product-info-detail .product-actions .btn--unavailable,
+.product-info-detail .product-actions .btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none !important;
+  box-shadow: none !important;
+  filter: grayscale(0.25);
 }
 
 /* ============================================

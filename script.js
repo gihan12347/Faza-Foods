@@ -2,6 +2,8 @@ let products = [];
 
 /** Order API: POST + public GET contract — see reference/fasa-orders-api/README.txt */
 const SPRING_BOOT_ORDER_API_URL = 'https://helpful-liberation-production-ed7d.up.railway.app/api/orders';
+/** Product catalog (fasa-orders-api GET /api/products). */
+const SPRING_BOOT_PRODUCTS_API_URL = 'https://helpful-liberation-production-ed7d.up.railway.app/api/products';
 /** Public read-only status by token (fasa-orders-api GET …/public/{token}). */
 const ORDER_PUBLIC_STATUS_PATH = '/public';
 /** Business WhatsApp (digits only, country code). Keep in sync with footer wa.me links. */
@@ -58,16 +60,57 @@ const SRI_LANKA_DISTRICTS = [
 ];
 
 async function loadProducts() {
-  try {
-    const response = await fetch('/public/products.json');
-    if (!response.ok) throw new Error('Failed to load products');
+    try {
+        const response = await fetch(SPRING_BOOT_PRODUCTS_API_URL);
+        if (!response.ok) {
+            throw new Error(`Products API responded with ${response.status}`);
+        }
 
-    const data = await response.json();
-    products = data.products;
+        const data = await response.json();
+        const list = Array.isArray(data?.products) ? data.products : [];
+        products = list
+            .map(normalizeApiProduct)
+            .filter((p) => p && p.id != null && !Number.isNaN(Number(p.id)));
+    } catch (error) {
+        console.error('Error loading products from API:', error);
+        products = [];
+    }
+}
 
-  } catch (error) {
-    console.error('Error loading products:', error);
-  }
+/** Map GET /api/products item to storefront shape (images, stock, numeric fields). */
+function normalizeApiProduct(raw) {
+    if (!raw || typeof raw !== 'object') {
+        return raw;
+    }
+
+    const p = { ...raw };
+    p.id = Number(p.id);
+    p.price = Number(p.price);
+    p.originalPrice = Number(p.originalPrice != null ? p.originalPrice : p.price);
+
+    if (p.currentStock != null && p.currentStock !== '') {
+        p.stock = Number(p.currentStock);
+    } else if (p.stock != null && p.stock !== '') {
+        p.stock = Number(p.stock);
+    }
+
+    if (!Array.isArray(p.ingredients)) {
+        p.ingredients = [];
+    }
+    if (!Array.isArray(p.useFor)) {
+        p.useFor = [];
+    }
+    if (!Array.isArray(p.images)) {
+        p.images = [];
+    }
+
+    if (p.image && !p.images.length) {
+        p.images = [p.image];
+    } else if (!p.image && p.images.length) {
+        p.image = p.images[0];
+    }
+
+    return p;
 }
 
 // ============================================
@@ -112,6 +155,40 @@ function formatDate(dateString) {
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+/** Stock from API (currentStock) or legacy stock field; missing = treated as available. */
+function getProductStock(product) {
+    if (!product) {
+        return null;
+    }
+    const raw = product.currentStock != null && product.currentStock !== ''
+        ? product.currentStock
+        : product.stock;
+    if (raw == null || raw === '') {
+        return null;
+    }
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+}
+
+/** Out of stock when stock is set and is zero or negative. */
+function isOutOfStock(product) {
+    const stock = getProductStock(product);
+    return stock != null && stock <= 0;
+}
+
+function getInStockProducts(list) {
+    const source = Array.isArray(list) ? list : products;
+    return source.filter((p) => !isOutOfStock(p));
+}
+
+function getOutOfStockProducts(list) {
+    const source = Array.isArray(list) ? list : products;
+    return source.filter((p) => isOutOfStock(p));
+}
+
+const OUT_OF_STOCK_MESSAGE =
+    'This product is currently out of stock. Add to Cart and Order Now are unavailable — please check back soon or message us on WhatsApp.';
+
 // ============================================
 // Product Card Component
 // ============================================
@@ -122,12 +199,13 @@ function createProductCard(product) {
     const discount = (originalPrice > currentPrice)
         ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
         : 0;
+    const outOfStock = isOutOfStock(product);
     
     return `
-        <div class="product-card" data-product-id="${product.id}">
+        <div class="product-card${outOfStock ? ' product-card--out-of-stock' : ''}" data-product-id="${product.id}">
             <div class="product-image-container">
                 <img src="${product.image}" alt="${product.name}" class="product-image" loading="lazy">
-                ${discount > 0 ? `<div class="product-badge sale">${discount}% OFF</div>` : ''}
+                ${outOfStock ? '<div class="product-badge out-of-stock">Out of stock</div>' : (discount > 0 ? `<div class="product-badge sale">${discount}% OFF</div>` : '')}
             </div>
             <div class="product-info">
                 <div class="product-category">${product.category}</div>
@@ -174,13 +252,31 @@ function navigateToProduct(productId) {
 // Filter Products
 // ============================================
 function filterProducts(category) {
-    let filteredProducts = products;
+    let filteredProducts = getInStockProducts();
     
     if (category !== 'all') {
-        filteredProducts = products.filter(product => product.category === category);
+        filteredProducts = filteredProducts.filter(product => product.category === category);
     }
     
     renderProducts(filteredProducts, 'productsGrid');
+}
+
+function renderOutOfStockSection() {
+    const section = document.getElementById('out-of-stock');
+    const grid = document.getElementById('outOfStockGrid');
+    if (!section || !grid) return;
+
+    const outOfStock = getOutOfStockProducts();
+    if (!outOfStock.length) {
+        section.classList.add('hidden');
+        section.setAttribute('aria-hidden', 'true');
+        grid.innerHTML = '';
+        return;
+    }
+
+    section.classList.remove('hidden');
+    section.removeAttribute('aria-hidden');
+    renderProducts(outOfStock, 'outOfStockGrid');
 }
 
 // ============================================
@@ -197,7 +293,7 @@ function loadProductDetails() {
         return;
     }
     
-    const product = products.find(p => p.id === productId);
+    const product = products.find((p) => Number(p.id) === productId);
     
     if (!product) {
         document.getElementById('productDetailsContent').innerHTML = 
@@ -275,6 +371,7 @@ function renderProductDetails(product) {
                 <span class="price-current-detail">${formatPrice(product.price)}</span>
                 ${discount > 0 ? `<span class="price-original-detail">${formatPrice(product.originalPrice)}</span>` : ''}
                 ${discount > 0 ? `<span class="product-badge sale" style="display: inline-block; margin-left: 1rem;">${discount}% OFF</span>` : ''}
+                ${isOutOfStock(product) ? '<span class="product-badge out-of-stock product-badge--inline">Out of stock</span>' : ''}
             </div>
             <p class="product-description-detail">${product.description}</p>
             <div class="product-features">
@@ -283,12 +380,18 @@ function renderProductDetails(product) {
                     ${featuresHTML}
                 </ul>
             </div>
+            <div class="product-out-of-stock-notice hidden" id="productOutOfStockNotice" role="status" aria-live="polite">
+                <span class="product-out-of-stock-notice__icon" aria-hidden="true">!</span>
+                <p class="product-out-of-stock-notice__text">${OUT_OF_STOCK_MESSAGE}</p>
+            </div>
             <div class="product-actions">
                 <button type="button" id="addToCart" class="btn btn-primary" data-id="${product.id}">Add to Cart</button>
                 <button type="button" id="orderNowBtn" class="btn btn-secondary" data-id="${product.id}" aria-label="Order Now">Order Now</button>
             </div>
         </div>
     `;
+
+    applyOutOfStockProductActions(product);
     
     // Add thumbnail click handlers
     content.querySelectorAll('.thumbnail').forEach(thumbnail => {
@@ -506,8 +609,9 @@ async function init() {
         return;
     }
 
-    const bestSellers = products.filter(p => p.isBestSeller);
-    const offers = products.filter(p => p.originalPrice > p.price);
+    const inStock = getInStockProducts();
+    const bestSellers = inStock.filter(p => p.isBestSeller);
+    const offers = inStock.filter(p => p.originalPrice > p.price);
 
     if (bestSellers.length) {
         renderProducts(bestSellers, 'bestSellersGrid');
@@ -519,7 +623,8 @@ async function init() {
         offersEl.style.display = 'none';
         document.querySelector('a[href="#offers"]')?.closest('li')?.remove();
     }
-    renderProducts(products, 'productsGrid');
+    renderProducts(inStock, 'productsGrid');
+    renderOutOfStockSection();
 
     const filterButtons = document.querySelectorAll('.filter-btn');
     filterButtons.forEach(button => {
@@ -531,7 +636,31 @@ async function init() {
     });
 }
 
+function applyOutOfStockProductActions(product) {
+    const outOfStock = isOutOfStock(product);
+    const notice = document.getElementById('productOutOfStockNotice');
+    const addBtn = document.getElementById('addToCart');
+    const orderBtn = document.getElementById('orderNowBtn');
+
+    if (notice) {
+        notice.classList.toggle('hidden', !outOfStock);
+    }
+
+    [addBtn, orderBtn].forEach((btn) => {
+        if (!btn) return;
+        btn.disabled = outOfStock;
+        btn.setAttribute('aria-disabled', outOfStock ? 'true' : 'false');
+        btn.classList.toggle('btn--unavailable', outOfStock);
+    });
+}
+
 function addToCart(product) {
+    if (!product) return;
+    if (isOutOfStock(product)) {
+        applyOutOfStockProductActions(product);
+        return;
+    }
+
     let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
     const existing = cart.find(item => item.id === product.id);
@@ -911,6 +1040,10 @@ function ensureBuyNowPopup() {
 
 function openBuyNowPopup(product) {
     if (!product) return;
+    if (isOutOfStock(product)) {
+        applyOutOfStockProductActions(product);
+        return;
+    }
     ensureBuyNowPopup();
 
     const popup = document.getElementById('buyNowDeliveryPopup');
@@ -2230,6 +2363,7 @@ $(document).ready(function() {
     });
 
     $(document).off('click', '#addToCart').on('click', '#addToCart', function() {
+        if (this.disabled) return;
         const id = $(this).data('id');
         trackProductCtaGa4('addToCart', id);
         const product = products.find(p => p.id === id);
@@ -2293,6 +2427,7 @@ $(document).ready(function() {
         });
 
     $(document).off('click', '#orderNowBtn').on('click', '#orderNowBtn', function() {
+        if (this.disabled) return;
         const id = Number($(this).data('id'));
         trackProductCtaGa4('orderNowBtn', id);
         const product = products.find((p) => p.id === id);
