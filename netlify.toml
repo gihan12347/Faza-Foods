@@ -1,0 +1,19 @@
+# https://docs.netlify.com/configure-builds/file-based-configuration/
+[build]
+  publish = "."
+
+# Pretty URLs for static HTML pages (mirrors serve.json)
+[[redirects]]
+  from = "/product"
+  to = "/product.html"
+  status = 200
+
+[[redirects]]
+  from = "/track-order"
+  to = "/track-order.html"
+  status = 200
+
+[[redirects]]
+  from = "/order-status"
+  to = "/track-order.html"
+  status = 200

@@ -11,10 +11,10 @@
         "Increase immunity",
         "Increase calcium"
       ],
-      "price": 320,
+      "price": 370,
       "name": "Sprouted Ragi Mix",
       "isBestSeller": true,
-      "originalPrice": 320,
+      "originalPrice": 370,
       "images": [
         "/public/images/sprouted-ragi-mix.png"
       ],
@@ -32,10 +32,10 @@
       "useFor": [
         "Increase immunity"
       ],
-      "price": 400,
+      "price": 450,
       "name": "Sprouted Ragi Powder (Kurakkan)",
       "isBestSeller": true,
-      "originalPrice": 400,
+      "originalPrice": 450,
       "images": [
         "/public/images/sprouted-ragi-powder.jpeg"
       ],
@@ -45,30 +45,6 @@
       "howToUse": "Making porridge",
       "description": "Healthy sprouted ragi powder for daily nutrition.",
       "category": "Baby & Kids Products"
-    },
-    {
-      "ingredients": [
-        "Lemon",
-        "Chili",
-        "Chili flakes",
-        "Salt"
-      ],
-      "useFor": [
-        "Eating with rice"
-      ],
-      "price": 450,
-      "name": "Lime Pickle",
-      "isBestSeller": false,
-      "originalPrice": 450,
-      "images": [
-        "/public/images/lime-pickle.jpeg"
-      ],
-      "weight": "250g",
-      "id": 3,
-      "image": "/public/images/lime-pickle.jpeg",
-      "howToUse": "Serve with rice or rotti",
-      "description": "Traditional homemade lime pickle.",
-      "category": "Special Homemade Items"
     },
     {
       "ingredients": [
@@ -148,10 +124,10 @@
       "useFor": [
         "Spicy porridge"
       ],
-      "price": 270,
+      "price": 300,
       "name": "Kodhipaal",
       "isBestSeller": false,
-      "originalPrice": 270,
+      "originalPrice": 300,
       "images": [
         "/public/images/kodhipaal.jpeg"
       ],
@@ -196,10 +172,10 @@
       "useFor": [
         "Brushing teeth"
       ],
-      "price": 150,
+      "price": 200,
       "name": "Tooth Powder",
       "isBestSeller": false,
-      "originalPrice": 150,
+      "originalPrice": 200,
       "images": [
         "/public/images/tooth-powder.jpeg"
       ],
@@ -255,14 +231,14 @@
       "useFor": [
         "Cure hair problems"
       ],
-      "price": 1700,
+      "price": 1850,
       "name": "Hair Oil",
       "isBestSeller": false,
-      "originalPrice": 1700,
+      "originalPrice": 1850,
       "images": [
         "/public/images/oil.jpeg"
       ],
-      "weight": "200ml",
+      "weight": "300ml",
       "id": 11,
       "image": "/public/images/oil.jpeg",
       "howToUse": "Apply on hair, leave 1-2 hours, then wash",
@@ -278,10 +254,10 @@
       "useFor": [
         "Brightening face"
       ],
-      "price": 700,
+      "price": 800,
       "name": "Face Mask",
       "isBestSeller": false,
-      "originalPrice": 700,
+      "originalPrice": 800,
       "images": [
         "/public/images/face-mask.jpeg"
       ],
@@ -302,10 +278,10 @@
       "useFor": [
         "Making snack"
       ],
-      "price": 200,
+      "price": 280,
       "name": "Jawwarisi Papadam",
       "isBestSeller": false,
-      "originalPrice": 200,
+      "originalPrice": 280,
       "images": [
         "/public/images/javvarisi-papadam.jpeg"
       ],
@@ -337,10 +313,10 @@
       "useFor": [
         "Healthy snacks"
       ],
-      "price": 450,
+      "price": 500,
       "name": "Health Mix",
       "isBestSeller": false,
-      "originalPrice": 450,
+      "originalPrice": 500,
       "images": [
         "/public/images/health-mix.jpeg"
       ],
@@ -366,7 +342,7 @@
         "Reduce diabetic",
         "Hormone balance"
       ],
-      "price": 400,
+      "price": 450,
       "name": "Kollu Kanji Mix",
       "isBestSeller": false,
       "originalPrice": 450,
@@ -378,32 +354,6 @@
       "image": "/public/images/kollu-kanji.jpeg",
       "howToUse": "Make as porridge to serve",
       "description": "Herbal mix to reduce weight and balance hormones.",
-      "category": "Healthy Food & Traditional Mixes"
-    },
-    {
-      "ingredients": [
-        "Apple",
-        "Beetroot",
-        "Carrot",
-        "Nuts",
-        "Cardamom"
-      ],
-      "useFor": [
-        "Increase Hb level",
-        "Brighten skin"
-      ],
-      "price": 720,
-      "name": "ABC Malt",
-      "isBestSeller": false,
-      "originalPrice": 800,
-      "images": [
-        "/public/images/abc-malt.jpeg"
-      ],
-      "weight": "50g",
-      "id": 16,
-      "image": "/public/images/abc-malt.jpeg",
-      "howToUse": "Mix with hot milk and serve",
-      "description": "Malt mix to increase hemoglobin and brighten skin.",
       "category": "Healthy Food & Traditional Mixes"
     },
     {
@@ -425,10 +375,10 @@
       "useFor": [
         "Beef curry"
       ],
-      "price": 160,
+      "price": 170,
       "name": "Beef Masala",
       "isBestSeller": false,
-      "originalPrice": 160,
+      "originalPrice": 170,
       "images": [
         "/public/images/beef-masala.jpeg"
       ],
@@ -458,10 +408,10 @@
       "useFor": [
         "Chicken curry"
       ],
-      "price": 150,
+      "price": 160,
       "name": "Chicken Masala",
       "isBestSeller": false,
-      "originalPrice": 150,
+      "originalPrice": 160,
       "images": [
         "/public/images/chicken-masala.jpeg"
       ],
@@ -489,10 +439,10 @@
       "useFor": [
         "Biriyani recipes"
       ],
-      "price": 300,
+      "price": 320,
       "name": "Biriyani Masala",
       "isBestSeller": true,
-      "originalPrice": 300,
+      "originalPrice": 320,
       "images": [
         "/public/images/biriyani-masala.jpeg"
       ],
@@ -519,10 +469,10 @@
       "useFor": [
         "Cooking recipes"
       ],
-      "price": 450,
+      "price": 550,
       "name": "Curry Powder",
       "isBestSeller": false,
-      "originalPrice": 450,
+      "originalPrice": 550,
       "images": [
         "/public/images/curry-powder.jpeg"
       ],
@@ -540,10 +490,10 @@
       "useFor": [
         "Cooking recipes"
       ],
-      "price": 400,
+      "price": 550,
       "name": "Chili Powder",
       "isBestSeller": false,
-      "originalPrice": 400,
+      "originalPrice": 550,
       "images": [
         "/public/images/chilli-powder.jpeg"
       ],
@@ -564,10 +514,10 @@
         "Increase weight",
         "Increase immunity"
       ],
-      "price": 500,
+      "price": 600,
       "name": "Banana Powder",
       "isBestSeller": false,
-      "originalPrice": 500,
+      "originalPrice": 600,
       "images": [
         "/public/images/banana-mix.jpeg"
       ],
@@ -589,10 +539,10 @@
       "useFor": [
         "Brighten face and body"
       ],
-      "price": 650,
+      "price": 700,
       "name": "Manjistha Soap",
       "isBestSeller": false,
-      "originalPrice": 650,
+      "originalPrice": 700,
       "images": [
         "/public/images/manjistha-soap.jpeg"
       ],
@@ -632,10 +582,10 @@
       "useFor": [
         "Cooking recipes"
       ],
-      "price": 230,
+      "price": 250,
       "name": "Pepper Powder",
       "isBestSeller": false,
-      "originalPrice": 230,
+      "originalPrice": 250,
       "images": [
         "/public/images/pepper-powder.png"
       ],
@@ -659,10 +609,10 @@
       "useFor": [
         "Porridge for babies"
       ],
-      "price": 700,
+      "price": 800,
       "name": "Grow Fast Mix",
       "isBestSeller": true,
-      "originalPrice": 700,
+      "originalPrice": 800,
       "images": [
         "/public/images/grow-fast.jpeg"
       ],
@@ -682,10 +632,10 @@
       "useFor": [
         "To cure digestive problems."
       ],
-      "price": 350,
+      "price": 380,
       "name": "Digestive Podi",
       "isBestSeller": false,
-      "originalPrice": 350,
+      "originalPrice": 380,
       "images": [
         "/public/images/digestive-podi.jpeg"
       ],
@@ -704,10 +654,10 @@
       "useFor": [
         "To make sweets and dishes."
       ],
-      "price": 650,
+      "price": 750,
       "name": "Ghee",
       "isBestSeller": false,
-      "originalPrice": 650,
+      "originalPrice": 750,
       "images": [
         "/public/images/ghee.jpeg"
       ],
@@ -715,32 +665,6 @@
       "id": 28,
       "image": "/public/images/ghee.jpeg",
       "howToUse": "Add in your many kind of recipes",
-      "description": "",
-      "category": "Special Homemade Items"
-    },
-    {
-      "ingredients": [
-        "Chicken",
-        "Sesame Oil",
-        "Garlic",
-        "Curry Leaves",
-        "Spices",
-        "Salt"
-      ],
-      "useFor": [
-        "Can eat as a sidedish."
-      ],
-      "price": 800,
-      "name": "Chicken Pickle",
-      "isBestSeller": false,
-      "originalPrice": 800,
-      "images": [
-        "/public/images/chicken-pickle.png"
-      ],
-      "weight": "100g",
-      "id": 29,
-      "image": "/public/images/chicken-pickle.png",
-      "howToUse": "Can have with rice,rotting,bread etc",
       "description": "",
       "category": "Special Homemade Items"
     },
@@ -759,10 +683,10 @@
       "useFor": [
         "To make fish curry."
       ],
-      "price": 150,
+      "price": 160,
       "name": "Fish Masala",
       "isBestSeller": false,
-      "originalPrice": 150,
+      "originalPrice": 160,
       "images": [
         "/public/images/fish-masala.jpeg"
       ],
@@ -772,6 +696,86 @@
       "howToUse": "Add in your fish curry recipe.",
       "description": "",
       "category": "Masalas & Cooking Essentials"
+    },
+    {
+      "ingredients": [
+        "Shihaka",
+        "Soap Nut",
+        "Fenugreek",
+        "Clove",
+        "Green Gram",
+        "Vetiver",
+        "Henna",
+        "Hibiscus",
+        "Curry Leaves",
+        "Nelli"
+      ],
+      "useFor": [
+        "As a cosmetic product."
+      ],
+      "price": 800,
+      "name": "Shihaka powder",
+      "isBestSeller": false,
+      "originalPrice": 800,
+      "images": [
+        "/public/images/hair-mask-powder.png"
+      ],
+      "weight": "100g",
+      "id": 31,
+      "image": "/public/images/hair-mask-powder.png",
+      "howToUse": "",
+      "description": "",
+      "category": "Cosmetics Products"
+    },
+    {
+      "ingredients": [
+        "Apple",
+        "Beetroot",
+        "Carrot",
+        "Nuts",
+        "Cardamom"
+      ],
+      "useFor": [
+        "Increase Hb level",
+        "Brighten skin"
+      ],
+      "price": 800,
+      "name": "ABC Malt",
+      "isBestSeller": false,
+      "originalPrice": 800,
+      "images": [
+        "/public/images/abc-malt.jpeg"
+      ],
+      "weight": "50g",
+      "id": 16,
+      "image": "/public/images/abc-malt.jpeg",
+      "howToUse": "Mix with hot milk and serve",
+      "description": "Malt mix to increase hemoglobin and brighten skin.",
+      "category": "Healthy Food & Traditional Mixes"
+    },
+    {
+      "ingredients": [
+        "Lemon",
+        "Chili",
+        "Chili flakes",
+        "Salt"
+      ],
+      "useFor": [
+        "Eating with rice"
+      ],
+      "price": 500,
+      "name": "Lime Pickle",
+      "isBestSeller": false,
+      "originalPrice": 500,
+      "images": [
+        "/public/images/lime-pickle.jpeg"
+      ],
+      "weight": "250g",
+      "id": 3,
+      "image": "/public/images/lime-pickle.jpeg",
+      "howToUse": "Serve with rice or rotti",
+      "description": "Traditional homemade lime pickle.",
+      "category": "Special Homemade Items"
     }
   ]
 }
