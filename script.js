@@ -901,15 +901,15 @@ function getShippingFee(items, deliveryDetails) {
     );
     console.log('Checking for hair oil in cart:', isContainHairOil);
 
-    if (deliveryTypeKey === 'courier' && Array.isArray(items) && items.length === 1) {
-        const [item] = items;
-        const itemName = String(item?.name || '').trim().toLowerCase();
-        const quantity = Math.max(1, Number(item?.quantity) || 1);    
-        console.log('Checking single-item courier discount for item:', itemName, 'quantity:', quantity);
-        if (itemName === 'kumkumadhi thailam') {
-            return 0;
-        }
-    }
+    // if (deliveryTypeKey === 'courier' && Array.isArray(items) && items.length === 1) {
+    //     const [item] = items;
+    //     const itemName = String(item?.name || '').trim().toLowerCase();
+    //     const quantity = Math.max(1, Number(item?.quantity) || 1);    
+    //     console.log('Checking single-item courier discount for item:', itemName, 'quantity:', quantity);
+    //     if (itemName === 'kumkumadhi thailam') {
+    //         return 0;
+    //     }
+    // }
 
     const normalizedDistrict = normalizeDistrictName(deliveryDetails.district);
     const districtGroup = SPECIAL_RATE_DISTRICTS.has(normalizedDistrict) ? 'special' : 'normal';
