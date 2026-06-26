@@ -899,27 +899,17 @@ function getShippingFee(items, deliveryDetails) {
     const isContainHairOil = Array.isArray(items) && items.some(item =>
         String(item?.name || '').toLowerCase().includes('hair oil')
     );
-    console.log('Checking for hair oil in cart:', isContainHairOil);
-
-    // if (deliveryTypeKey === 'courier' && Array.isArray(items) && items.length === 1) {
-    //     const [item] = items;
-    //     const itemName = String(item?.name || '').trim().toLowerCase();
-    //     const quantity = Math.max(1, Number(item?.quantity) || 1);    
-    //     console.log('Checking single-item courier discount for item:', itemName, 'quantity:', quantity);
-    //     if (itemName === 'kumkumadhi thailam') {
-    //         return 0;
-    //     }
-    // }
-
+    const isContainNeemComb = Array.isArray(items) && items.some(item =>
+        String(item?.name || '').toLowerCase().includes('Neem Comb')
+    );
     const normalizedDistrict = normalizeDistrictName(deliveryDetails.district);
     const districtGroup = SPECIAL_RATE_DISTRICTS.has(normalizedDistrict) ? 'special' : 'normal';
     const rates = SHIPPING_RATES[districtGroup][deliveryTypeKey] || SHIPPING_RATES[districtGroup].courier;
 
     const totalWeightKg = getCartWeightKg(items);
     const billableKg = Math.max(1, Math.ceil(totalWeightKg));
-    console.log('Total cart weight (kg):', totalWeightKg);
 
-    if (isContainHairOil && deliveryTypeKey === 'courier') {
+    if ((isContainHairOil || isContainNeemComb) && deliveryTypeKey === 'courier') {
         if(totalWeightKg <= 1) {
             return 0;
         } else if (totalWeightKg <= 2) {
