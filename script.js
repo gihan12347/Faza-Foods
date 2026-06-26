@@ -458,7 +458,7 @@ function renderProductDetails(product) {
             </div>
             <p class="product-description-detail">${product.description}</p>
             <div class="product-features">
-                <h3>Ingredients</h3>
+                ${featuresHTML?.trim() ? '<h3>Ingredients</h3>' : ''}
                 <ul>
                     ${featuresHTML}
                 </ul>
