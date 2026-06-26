@@ -900,7 +900,7 @@ function getShippingFee(items, deliveryDetails) {
         String(item?.name || '').toLowerCase().includes('hair oil')
     );
     const isContainNeemComb = Array.isArray(items) && items.some(item =>
-        String(item?.name || '').toLowerCase().includes('Neem Comb')
+        String(item?.name || '').toLowerCase().includes('neem comb')
     );
     console.log('isContainNeemComb :::: '+isContainNeemComb)
     const normalizedDistrict = normalizeDistrictName(deliveryDetails.district);
