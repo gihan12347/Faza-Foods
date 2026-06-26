@@ -902,6 +902,7 @@ function getShippingFee(items, deliveryDetails) {
     const isContainNeemComb = Array.isArray(items) && items.some(item =>
         String(item?.name || '').toLowerCase().includes('Neem Comb')
     );
+    console.log('isContainNeemComb :::: '+isContainNeemComb)
     const normalizedDistrict = normalizeDistrictName(deliveryDetails.district);
     const districtGroup = SPECIAL_RATE_DISTRICTS.has(normalizedDistrict) ? 'special' : 'normal';
     const rates = SHIPPING_RATES[districtGroup][deliveryTypeKey] || SHIPPING_RATES[districtGroup].courier;
