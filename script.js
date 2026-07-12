@@ -33,24 +33,21 @@ function trackProductCtaGa4(buttonId, productId) {
 
 let wasCartOrderSummaryUnlocked = false;
 let wasBuyNowPricePreviewComplete = false;
+let cartCheckoutStage = 'items';
+let buyNowCheckoutStage = 'items';
+let cartPaymentSummaryCache = null;
+let buyNowPaymentSummaryCache = null;
+let paymentSummaryLoading = false;
 
-const SPECIAL_RATE_DISTRICTS = new Set([
-    'ampara',
-    'anuradhapura',
-    'batticaloa',
-    'trincomalee',
-    'jaffna'
-]);
+const CHECKOUT_STAGES = {
+    ITEMS: 'items',
+    DELIVERY: 'delivery',
+    PAYMENT: 'payment'
+};
 
-const SHIPPING_RATES = {
-    normal: {
-        courier: [500, 650, 800],
-        cashOnDelivery: [550, 700, 850]
-    },
-    special: {
-        courier: [550, 700, 850],
-        cashOnDelivery: [600, 750, 900]
-    }
+const PAYMENT_SUMMARY_STORAGE_KEYS = {
+    cart: 'fasa_cart_payment_summary',
+    buyNow: 'fasa_buy_now_payment_summary'
 };
 
 const SRI_LANKA_DISTRICTS = [
@@ -193,7 +190,45 @@ function normalizeApiProduct(raw) {
         p.image = p.images[0];
     }
 
+    p.isDeliveryFree = normalizeIsDeliveryFree(p.isDeliveryFree ?? p.is_delivery_free);
+
     return p;
+}
+
+/** Coerce product/cart item delivery-free flag to a strict boolean. */
+function normalizeIsDeliveryFree(value) {
+    if (typeof value === 'boolean') return value;
+    if (value === 1 || value === '1') return true;
+    if (value === 0 || value === '0') return false;
+    if (typeof value === 'string') {
+        const normalized = value.trim().toLowerCase();
+        if (normalized === 'true' || normalized === 'yes') return true;
+        if (normalized === 'false' || normalized === 'no' || normalized === '') return false;
+    }
+    return Boolean(value);
+}
+
+function resolveIsDeliveryFreeForItem(item) {
+    if (!item || typeof item !== 'object') return false;
+    if (item.isDeliveryFree != null || item.is_delivery_free != null) {
+        return normalizeIsDeliveryFree(item.isDeliveryFree ?? item.is_delivery_free);
+    }
+    const product = products.find((p) => Number(p.id) === Number(item.id));
+    if (product) {
+        return normalizeIsDeliveryFree(product.isDeliveryFree ?? product.is_delivery_free);
+    }
+    return false;
+}
+
+function buildOrderItemPayload(item) {
+    return {
+        id: Number(item.id),
+        name: item.name,
+        price: Number(item.price),
+        quantity: Math.max(1, Number(item.quantity) || 1),
+        weight: item.weight || '',
+        isDeliveryFree: resolveIsDeliveryFreeForItem(item)
+    };
 }
 
 // ============================================
@@ -201,6 +236,779 @@ function normalizeApiProduct(raw) {
 // ============================================
 function formatPrice(price) {
     return `Rs. ${price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+}
+
+function formatShippingDisplay(amount) {
+    return Number(amount) === 0 ? 'Free' : formatPrice(amount);
+}
+
+function escapeHtml(text) {
+    return String(text ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function computeOrderSubtotal(items) {
+    const safeItems = Array.isArray(items) ? items : [];
+    const orderPrice = safeItems.reduce((sum, item) => {
+        const qty = Math.max(1, Number(item.quantity) || 1);
+        return sum + ((Number(item.price) || 0) * qty);
+    }, 0);
+    return Number(orderPrice.toFixed(2));
+}
+
+function buildPricePreviewPayload(items, deliveryDetails, priceSummary, meta = {}) {
+    const safeItems = Array.isArray(items) ? items : [];
+    const summary = normalizeStoredPaymentSummary(priceSummary);
+    if (!summary) {
+        throw new Error('Payment summary from /cart/summary is required for price preview');
+    }
+    const lineItems = safeItems.map((item) => {
+        const qty = Math.max(1, Number(item.quantity) || 1);
+        const unit = Number(item.price) || 0;
+        return {
+            name: item.name || 'Item',
+            quantity: qty,
+            unitPrice: unit,
+            lineTotal: Number((unit * qty).toFixed(2)),
+            weight: item.weight || ''
+        };
+    });
+
+    return {
+        title: meta.title || 'Price Preview',
+        lineItems,
+        subtotal: summary.subtotal,
+        shipping: summary.shipping,
+        total: summary.total,
+        delivery: {
+            type: deliveryDetails.deliveryType || '',
+            customerName: deliveryDetails.customerName || '',
+            district: deliveryDetails.district || '',
+            addressLine1: deliveryDetails.addressLine1 || '',
+            addressLine2: deliveryDetails.addressLine2 || ''
+        }
+    };
+}
+
+function buildPricePreviewWindowHtml(payload) {
+    const lineRows = (payload.lineItems || []).map((item) => `
+        <tr>
+            <td class="item-name">
+                <strong>${escapeHtml(item.name)}</strong>
+                ${item.weight ? `<span class="item-meta">${escapeHtml(item.weight)}</span>` : ''}
+            </td>
+            <td class="item-qty">${item.quantity}</td>
+            <td class="item-price">${formatPrice(item.unitPrice)}</td>
+            <td class="item-total">${formatPrice(item.lineTotal)}</td>
+        </tr>
+    `).join('');
+
+    const addressParts = [
+        payload.delivery.addressLine1,
+        payload.delivery.addressLine2,
+        payload.delivery.district
+    ].filter(Boolean).map(escapeHtml);
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${escapeHtml(payload.title)} — Fasa Products</title>
+    <style>
+        :root {
+            --primary: #1e4a24;
+            --secondary: #4a7c2a;
+            --accent: #7ec850;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --surface: #f8faf6;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+            color: var(--text);
+            background: linear-gradient(180deg, #f3f8ef 0%, #fff 220px);
+            line-height: 1.5;
+        }
+        .wrap {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 1.25rem 1rem 2rem;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .brand-mark {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            display: grid;
+            place-items: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+        h1 {
+            margin: 0;
+            font-size: clamp(1.15rem, 3vw, 1.45rem);
+            color: var(--primary);
+        }
+        .subtitle {
+            margin: 0.2rem 0 0;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+        .card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1rem;
+            margin-top: 1rem;
+            box-shadow: 0 10px 30px rgba(30, 74, 36, 0.06);
+        }
+        .card h2 {
+            margin: 0 0 0.75rem;
+            font-size: 0.95rem;
+            color: var(--primary);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 0.55rem 0.35rem;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            border-bottom: 1px solid var(--border);
+        }
+        td { border-bottom: 1px solid #f1f5f9; }
+        tr:last-child td { border-bottom: none; }
+        .item-name strong { display: block; }
+        .item-meta {
+            display: block;
+            margin-top: 0.15rem;
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+        .item-qty, .item-price, .item-total { white-space: nowrap; }
+        .item-total { font-weight: 600; color: var(--primary); }
+        .totals {
+            margin-top: 0.85rem;
+            border-top: 1px solid var(--border);
+            padding-top: 0.65rem;
+        }
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.35rem 0;
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+        .totals-row--grand {
+            margin-top: 0.35rem;
+            padding-top: 0.65rem;
+            border-top: 2px solid var(--border);
+            color: var(--text);
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+        .totals-row--grand span:last-child { color: var(--primary); }
+        .delivery-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            font-size: 0.9rem;
+        }
+        .delivery-list li {
+            padding: 0.3rem 0;
+            color: var(--muted);
+        }
+        .delivery-list strong { color: var(--text); }
+        .note {
+            margin-top: 1rem;
+            font-size: 0.82rem;
+            color: var(--muted);
+            text-align: center;
+        }
+        @media (max-width: 520px) {
+            th:nth-child(3), td:nth-child(3) { display: none; }
+            .wrap { padding-inline: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="brand">
+            <div class="brand-mark" aria-hidden="true">F</div>
+            <div>
+                <h1>${escapeHtml(payload.title)}</h1>
+                <p class="subtitle">Estimated order total — review before checkout</p>
+            </div>
+        </div>
+        <section class="card">
+            <h2>Items</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Qty</th>
+                        <th>Unit</th>
+                        <th>Line total</th>
+                    </tr>
+                </thead>
+                <tbody>${lineRows}</tbody>
+            </table>
+            <div class="totals">
+                <div class="totals-row"><span>Subtotal</span><span>${formatPrice(payload.subtotal)}</span></div>
+                <div class="totals-row"><span>Shipping</span><span>${formatShippingDisplay(payload.shipping)}</span></div>
+                <div class="totals-row totals-row--grand"><span>Total</span><span>${formatPrice(payload.total)}</span></div>
+            </div>
+        </section>
+        <section class="card">
+            <h2>Delivery</h2>
+            <ul class="delivery-list">
+                <li><strong>Type:</strong> ${escapeHtml(payload.delivery.type)}</li>
+                <li><strong>Name:</strong> ${escapeHtml(payload.delivery.customerName)}</li>
+                ${addressParts.length ? `<li><strong>Address:</strong> ${addressParts.join(', ')}</li>` : ''}
+            </ul>
+        </section>
+        <p class="note">You can close this window and return to checkout when ready.</p>
+    </div>
+</body>
+</html>`;
+}
+
+function openPricePreviewWindow(payload) {
+    const previewWindow = window.open('', '_blank', 'noopener,noreferrer');
+    if (!previewWindow) {
+        showApiResponsePopup('Please allow pop-ups in your browser to view the price preview.');
+        return;
+    }
+    previewWindow.document.open();
+    previewWindow.document.write(buildPricePreviewWindowHtml(payload));
+    previewWindow.document.close();
+    previewWindow.opener = null;
+}
+
+async function openCartPricePreview() {
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    if (!cart.length) {
+        showApiResponsePopup('Your cart is empty!');
+        return;
+    }
+    const deliveryDetails = getDeliveryDetails();
+    if (!isCartOrderSummaryUnlocked(deliveryDetails)) {
+        showApiResponsePopup('Please complete delivery details and valid phone numbers to preview prices.');
+        return;
+    }
+    try {
+        const summary = await fetchCartSummaryFromBackend(cart, deliveryDetails);
+        openPricePreviewWindow(buildPricePreviewPayload(cart, deliveryDetails, summary, { title: 'Cart — Price Preview' }));
+    } catch (err) {
+        console.error('Cart price preview failed:', err);
+        showApiResponsePopup('Could not load prices from the server. Please try again.');
+    }
+}
+
+async function openBuyNowPricePreview() {
+    const item = getBuyNowItemFromPopup();
+    const deliveryDetails = getBuyNowDeliveryDetails();
+    if (!item || !isCartOrderSummaryUnlocked(deliveryDetails)) {
+        showApiResponsePopup('Please complete delivery details and valid phone numbers to preview prices.');
+        return;
+    }
+    try {
+        const summary = await fetchCartSummaryFromBackend([item], deliveryDetails);
+        openPricePreviewWindow(buildPricePreviewPayload([item], deliveryDetails, summary, { title: 'Buy Now — Price Preview' }));
+    } catch (err) {
+        console.error('Buy now price preview failed:', err);
+        showApiResponsePopup('Could not load prices from the server. Please try again.');
+    }
+}
+
+function buildInlinePaymentSummaryHtml(items, deliveryDetails, priceSummary = null, context = 'cart') {
+    const summary = normalizeStoredPaymentSummary(priceSummary);
+    if (!summary) {
+        return getPaymentSummaryLoadingHtml();
+    }
+
+    savePaymentSummaryToStorage(context, summary);
+
+    return `
+        <h3 class="checkout-payment-summary__title">Payment summary</h3>
+        <div class="checkout-payment-summary__rows">
+            <div class="checkout-payment-summary__row">
+                <span>Subtotal</span>
+                <span>${formatPrice(summary.subtotal)}</span>
+            </div>
+            <div class="checkout-payment-summary__row">
+                <span>Shipping</span>
+                <span>${formatShippingDisplay(summary.shipping)}</span>
+            </div>
+            <div class="checkout-payment-summary__row checkout-payment-summary__row--total">
+                <span>Total</span>
+                <span>${formatPrice(summary.total)}</span>
+            </div>
+        </div>
+    `;
+}
+
+function getCartSummaryApiUrl() {
+    if (typeof window !== 'undefined' && window.FASA_CART_SUMMARY_API_URL) {
+        return String(window.FASA_CART_SUMMARY_API_URL).trim();
+    }
+    const base = String(SPRING_BOOT_ORDER_API_URL || '').replace(/\/+$/, '');
+    return `${base}/cart/summary`;
+}
+
+function buildCartSummaryRequestPayload(items, deliveryDetails) {
+    const safeItems = Array.isArray(items) ? items : [];
+    return {
+        items: safeItems.map((item) => buildOrderItemPayload(item)),
+        deliveryDetails: deliveryDetails || null
+    };
+}
+
+function parseCartSummaryResponse(response) {
+    const subtotal = Number(response?.subtotal);
+    const shipping = Number(response?.shipping);
+    const total = Number(response?.total);
+    if (!Number.isFinite(subtotal) || !Number.isFinite(shipping) || !Number.isFinite(total)) {
+        throw new Error('Invalid cart summary response');
+    }
+    return {
+        subtotal: Number(subtotal.toFixed(2)),
+        shipping: Number(shipping.toFixed(2)),
+        total: Number(total.toFixed(2))
+    };
+}
+
+function fetchCartSummaryFromBackend(items, deliveryDetails) {
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: getCartSummaryApiUrl(),
+            method: 'POST',
+            contentType: 'application/json',
+            dataType: 'json',
+            data: JSON.stringify(buildCartSummaryRequestPayload(items, deliveryDetails)),
+            success: (response) => {
+                try {
+                    resolve(parseCartSummaryResponse(response));
+                } catch (err) {
+                    reject(err);
+                }
+            },
+            error: (xhr) => reject(xhr)
+        });
+    });
+}
+
+function getPaymentSummaryLoadingHtml() {
+    return `
+        <div class="checkout-payment-summary checkout-payment-summary--loading" role="status" aria-live="polite" aria-busy="true">
+            <div class="checkout-payment-summary__loader" aria-hidden="true">
+                <span class="checkout-payment-summary__loader-ring"></span>
+                <img src="${CART_LOADING_ICON_SRC}" alt="" class="checkout-payment-summary__loader-icon" width="44" height="44">
+            </div>
+            <p class="checkout-payment-summary__loader-text">Loading payment summary…</p>
+        </div>
+    `;
+}
+
+function normalizeStoredPaymentSummary(summary) {
+    const subtotal = Number(summary?.subtotal);
+    const shipping = Number(summary?.shipping);
+    const total = Number(summary?.total);
+    if (!Number.isFinite(subtotal) || !Number.isFinite(shipping) || !Number.isFinite(total)) {
+        return null;
+    }
+    return {
+        subtotal: Number(subtotal.toFixed(2)),
+        shipping: Number(shipping.toFixed(2)),
+        total: Number(total.toFixed(2)),
+        savedAt: summary?.savedAt || new Date().toISOString()
+    };
+}
+
+function getPaymentSummaryStorageKey(context) {
+    return context === 'buyNow'
+        ? PAYMENT_SUMMARY_STORAGE_KEYS.buyNow
+        : PAYMENT_SUMMARY_STORAGE_KEYS.cart;
+}
+
+function savePaymentSummaryToStorage(context, summary) {
+    const normalized = normalizeStoredPaymentSummary(summary);
+    if (!normalized) return null;
+    try {
+        localStorage.setItem(getPaymentSummaryStorageKey(context), JSON.stringify(normalized));
+    } catch (err) {
+        console.warn('Could not save payment summary to localStorage:', err);
+    }
+    if (context === 'buyNow') {
+        buyNowPaymentSummaryCache = normalized;
+    } else {
+        cartPaymentSummaryCache = normalized;
+    }
+    return normalized;
+}
+
+function loadPaymentSummaryFromStorage(context) {
+    try {
+        const raw = localStorage.getItem(getPaymentSummaryStorageKey(context));
+        if (!raw) return null;
+        return normalizeStoredPaymentSummary(JSON.parse(raw));
+    } catch {
+        return null;
+    }
+}
+
+function getPriceOverridesFromStorage(context) {
+    const summary = loadPaymentSummaryFromStorage(context);
+    if (!summary) return null;
+    return {
+        orderPrice: summary.subtotal,
+        deliveryPrice: summary.shipping
+    };
+}
+
+function applyBackendSummaryToHiddenFields(summary, context = 'cart') {
+    if (!summary) return;
+    if (context === 'buyNow') {
+        $('#buyNowSubtotal').text(formatPrice(summary.subtotal));
+        $('#buyNowShipping').text(formatShippingDisplay(summary.shipping));
+        $('#buyNowTotal').text(formatPrice(summary.total));
+        return;
+    }
+    $('#subtotal').text(formatPrice(summary.subtotal));
+    $('#shipping').text(formatShippingDisplay(summary.shipping));
+    $('#total').text(formatPrice(summary.total));
+}
+
+function setPaymentSummaryPanelLoading(panelId, loading) {
+    const panel = document.getElementById(panelId);
+    if (!panel) return;
+    if (loading) {
+        panel.innerHTML = getPaymentSummaryLoadingHtml();
+    }
+}
+
+function setPaymentSummaryButtonsDisabled(disabled) {
+    $('#cartViewPaymentSummaryBtn, #buyNowViewPaymentSummaryBtn, #checkoutBtn, #buyNowCheckoutBtn')
+        .prop('disabled', Boolean(disabled));
+}
+
+async function loadPaymentSummaryAndShow(config) {
+    const {
+        items,
+        deliveryDetails,
+        panelId,
+        setStageFn,
+        context,
+        scrollTargetId
+    } = config;
+
+    if (paymentSummaryLoading) return;
+    paymentSummaryLoading = true;
+
+    setStageFn(CHECKOUT_STAGES.PAYMENT);
+    setPaymentSummaryPanelLoading(panelId, true);
+    setPaymentSummaryButtonsDisabled(true);
+
+    const scrollEl = scrollTargetId ? document.getElementById(scrollTargetId) : null;
+    const scrollPaymentOnMobile = context === 'cart'
+        && window.matchMedia('(max-width: 480px)').matches;
+    scrollElementToTopAfterLayout(scrollEl, { extraDelays: scrollPaymentOnMobile });
+
+    try {
+        const summary = await fetchCartSummaryFromBackend(items, deliveryDetails);
+        const panel = document.getElementById(panelId);
+        if (panel) {
+            panel.innerHTML = buildInlinePaymentSummaryHtml(items, deliveryDetails, summary, context);
+        }
+        if (context === 'cart') {
+            scrollCartStageToTop(CHECKOUT_STAGES.PAYMENT);
+        } else if (scrollEl) {
+            scrollElementToTopAfterLayout(scrollEl, { extraDelays: scrollPaymentOnMobile });
+        }
+    } catch (err) {
+        console.error('Cart summary request failed:', err);
+        clearPaymentSummaryCache(context);
+        setStageFn(CHECKOUT_STAGES.DELIVERY);
+        showApiResponsePopup('Could not load payment summary from the server. Please check your connection and try again.');
+        return false;
+    } finally {
+        paymentSummaryLoading = false;
+        if (context === 'buyNow') {
+            refreshBuyNowSummaryState();
+        } else {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            refreshCartSummaryState(cart);
+        }
+    }
+    return true;
+}
+
+function clearPaymentSummaryCache(context = 'all') {
+    if (context === 'cart' || context === 'all') {
+        try {
+            localStorage.removeItem(PAYMENT_SUMMARY_STORAGE_KEYS.cart);
+        } catch {
+            /* ignore */
+        }
+        cartPaymentSummaryCache = null;
+    }
+    if (context === 'buyNow' || context === 'all') {
+        try {
+            localStorage.removeItem(PAYMENT_SUMMARY_STORAGE_KEYS.buyNow);
+        } catch {
+            /* ignore */
+        }
+        buyNowPaymentSummaryCache = null;
+    }
+}
+
+function updateCheckoutStepsIndicator(containerId, stage) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.querySelectorAll('.checkout-steps__item').forEach((el) => {
+        const step = el.getAttribute('data-step');
+        el.classList.toggle('checkout-steps__item--active', step === stage);
+        el.classList.toggle('checkout-steps__item--done', getCheckoutStageIndex(step) < getCheckoutStageIndex(stage));
+    });
+}
+
+function getCheckoutStageIndex(stage) {
+    const order = [CHECKOUT_STAGES.ITEMS, CHECKOUT_STAGES.DELIVERY, CHECKOUT_STAGES.PAYMENT];
+    const idx = order.indexOf(stage);
+    return idx === -1 ? 0 : idx;
+}
+
+function resetElementScrollTop(el) {
+    if (!el) return;
+    el.scrollTop = 0;
+}
+
+function scrollElementToTopAfterLayout(el, { extraDelays = false } = {}) {
+    if (!el) return;
+    const reset = () => resetElementScrollTop(el);
+    reset();
+    requestAnimationFrame(() => {
+        reset();
+        requestAnimationFrame(reset);
+    });
+    if (extraDelays) {
+        [50, 150, 300].forEach((ms) => setTimeout(reset, ms));
+    }
+}
+
+function scrollCartStageToTop(stage) {
+    const scrollMap = {
+        [CHECKOUT_STAGES.ITEMS]: 'cartItemsScroll',
+        [CHECKOUT_STAGES.DELIVERY]: 'cartDeliveryScroll',
+        [CHECKOUT_STAGES.PAYMENT]: 'cartPaymentScroll'
+    };
+    const scrollEl = document.getElementById(scrollMap[stage]);
+    if (!scrollEl) return;
+    const extraDelays = stage === CHECKOUT_STAGES.PAYMENT
+        && window.matchMedia('(max-width: 480px)').matches;
+    scrollElementToTopAfterLayout(scrollEl, { extraDelays });
+}
+
+function closeCartPanel() {
+    const panel = document.getElementById('cartSidepanel');
+    const overlay = document.getElementById('cartOverlay');
+    panel?.classList.remove('active');
+    overlay?.classList.remove('active');
+    resetCartCheckoutFlow();
+}
+
+function setCartCheckoutStage(stage) {
+    cartCheckoutStage = stage;
+    const stageMap = {
+        [CHECKOUT_STAGES.ITEMS]: 'cartStageItems',
+        [CHECKOUT_STAGES.DELIVERY]: 'cartStageDelivery',
+        [CHECKOUT_STAGES.PAYMENT]: 'cartStagePayment'
+    };
+    Object.entries(stageMap).forEach(([key, id]) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.toggle('hidden', key !== stage);
+        }
+    });
+    updateCheckoutStepsIndicator('cartCheckoutSteps', stage);
+
+    const titleEl = document.querySelector('.cart-header h2');
+    if (titleEl) {
+        const titles = {
+            [CHECKOUT_STAGES.ITEMS]: 'Shopping Cart',
+            [CHECKOUT_STAGES.DELIVERY]: 'Delivery Details',
+            [CHECKOUT_STAGES.PAYMENT]: 'Payment Summary'
+        };
+        titleEl.textContent = titles[stage] || 'Shopping Cart';
+    }
+
+    const stepsEl = document.getElementById('cartCheckoutSteps');
+    if (stepsEl) {
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        const isEmpty = !Array.isArray(cart) || cart.length === 0;
+        stepsEl.classList.toggle('hidden', isEmpty);
+    }
+
+    scrollCartStageToTop(stage);
+}
+
+function resetCartCheckoutFlow() {
+    clearPaymentSummaryCache('cart');
+    setCartCheckoutStage(CHECKOUT_STAGES.ITEMS);
+}
+
+function setBuyNowCheckoutStage(stage) {
+    buyNowCheckoutStage = stage;
+    const stageMap = {
+        [CHECKOUT_STAGES.ITEMS]: 'buyNowStageItems',
+        [CHECKOUT_STAGES.DELIVERY]: 'buyNowStageDelivery',
+        [CHECKOUT_STAGES.PAYMENT]: 'buyNowStagePayment'
+    };
+    Object.entries(stageMap).forEach(([key, id]) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.toggle('hidden', key !== stage);
+        }
+    });
+    updateCheckoutStepsIndicator('buyNowCheckoutSteps', stage);
+
+    const titleEl = document.getElementById('buyNowPopupTitle');
+    if (titleEl) {
+        const titles = {
+            [CHECKOUT_STAGES.ITEMS]: 'Buy Now',
+            [CHECKOUT_STAGES.DELIVERY]: 'Delivery Details',
+            [CHECKOUT_STAGES.PAYMENT]: 'Payment Summary'
+        };
+        titleEl.textContent = titles[stage] || 'Buy Now';
+    }
+
+    const stepsEl = document.getElementById('buyNowCheckoutSteps');
+    if (stepsEl) {
+        stepsEl.classList.toggle('hidden', stage === CHECKOUT_STAGES.ITEMS);
+    }
+
+    const scrollMap = {
+        [CHECKOUT_STAGES.ITEMS]: 'buyNowItemsScroll',
+        [CHECKOUT_STAGES.DELIVERY]: 'buyNowDeliveryScroll',
+        [CHECKOUT_STAGES.PAYMENT]: 'buyNowPaymentScroll'
+    };
+    const scrollEl = document.getElementById(scrollMap[stage]);
+    if (scrollEl) scrollEl.scrollTop = 0;
+}
+
+function resetBuyNowCheckoutFlow() {
+    clearPaymentSummaryCache('buyNow');
+    setBuyNowCheckoutStage(CHECKOUT_STAGES.ITEMS);
+}
+
+function renderBuyNowProductStage() {
+    const product = getBuyNowProductFromPopup();
+    const container = document.getElementById('buyNowStageProductContent');
+    if (!product || !container) return;
+
+    const weightBadge = product.weight
+        ? `<span class="detail-badge">${escapeHtml(product.weight)}</span>`
+        : '';
+
+    container.innerHTML = `
+        <div class="cart-item">
+            <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}">
+            <div class="cart-info">
+                <p class="product-name">${escapeHtml(product.name)}</p>
+                <p class="product-price">${formatPrice(Number(product.price) || 0)}</p>
+                <div class="product-details">
+                    <span class="detail-badge">Qty: 1</span>
+                    ${weightBadge}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function getBuyNowProductFromPopup() {
+    const popup = document.getElementById('buyNowDeliveryPopup');
+    if (!popup) return null;
+    const productId = Number(popup.dataset.productId);
+    if (!Number.isFinite(productId)) return null;
+    return products.find((p) => Number(p.id) === productId) || null;
+}
+
+function validateCartDeliveryForSummary() {
+    const deliveryDetails = getDeliveryDetails();
+    const phoneValidation = setPhoneValidationUI(
+        {
+            whatsAppSelector: '#deliveryWhatsAppNumber',
+            otherSelector: '#deliveryOtherPhoneNumber',
+            errorSelector: '#deliveryPhoneError'
+        },
+        deliveryDetails,
+        true
+    );
+    if (!isCartOrderSummaryUnlocked(deliveryDetails)) {
+        if (!hasDeliveryDetails(deliveryDetails)) {
+            showApiResponsePopup('Please enter your full name, delivery address, phone numbers, and district.');
+        } else {
+            showApiResponsePopup(phoneValidation.message || `Please enter valid, different WhatsApp and other phone numbers (exactly ${ORDER_PHONE_DIGIT_LENGTH} digits each).`);
+        }
+        if (!hasValidCustomerName(deliveryDetails)) {
+            scrollCartPanelToward('#cartDeliveryForm .cart-form-group--customer-name');
+        } else {
+            scheduleScrollCartToPhoneFieldsIfNeeded();
+        }
+        return false;
+    }
+    return true;
+}
+
+function validateBuyNowDeliveryForSummary() {
+    const deliveryDetails = getBuyNowDeliveryDetails();
+    const phoneValidation = setPhoneValidationUI(
+        {
+            whatsAppSelector: '#buyNowWhatsAppNumber',
+            otherSelector: '#buyNowOtherPhoneNumber',
+            errorSelector: '#buyNowPhoneError'
+        },
+        deliveryDetails,
+        true
+    );
+    if (!isCartOrderSummaryUnlocked(deliveryDetails)) {
+        if (!hasDeliveryDetails(deliveryDetails)) {
+            showApiResponsePopup('Please enter your full name, delivery address, phone numbers, and district.');
+        } else {
+            showApiResponsePopup(phoneValidation.message || `Please enter valid, different WhatsApp and other phone numbers (exactly ${ORDER_PHONE_DIGIT_LENGTH} digits each).`);
+        }
+        if (!hasValidCustomerName(deliveryDetails)) {
+            scrollBuyNowPanelToward('#buyNowDeliveryForm .cart-form-group--customer-name');
+        } else {
+            scheduleScrollBuyNowToPhoneFieldsIfNeeded();
+        }
+        return false;
+    }
+    return true;
 }
 
 /** Parse text like "Rs. 1,234.56" or "Free" from cart / buy-now summary labels. */
@@ -589,20 +1397,35 @@ async function renderReviews(productId) {
 function initMobileMenu() {
     const toggle = document.getElementById('mobileMenuToggle');
     const nav = document.getElementById('nav');
-    
-    if (toggle && nav) {
-        toggle.addEventListener('click', function() {
-            nav.classList.toggle('active');
-        });
-        
-        // Close menu when clicking on a link
-        const navLinks = nav.querySelectorAll('a');
-        navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                nav.classList.remove('active');
-            });
-        });
-    }
+
+    if (!toggle || !nav) return;
+
+    const setMenuOpen = (open) => {
+        nav.classList.toggle('active', open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+        document.body.classList.toggle('nav-open', open);
+    };
+
+    toggle.addEventListener('click', function () {
+        setMenuOpen(!nav.classList.contains('active'));
+    });
+
+    nav.querySelectorAll('a').forEach((link) => {
+        link.addEventListener('click', () => setMenuOpen(false));
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && nav.classList.contains('active')) {
+            setMenuOpen(false);
+        }
+    });
+
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768 && nav.classList.contains('active')) {
+            setMenuOpen(false);
+        }
+    });
 }
 
 // ============================================
@@ -762,7 +1585,8 @@ function addToCart(product) {
             price: product.price,
             image: product.images[0],
             weight: product.weight || '',
-            quantity: 1
+            quantity: 1,
+            isDeliveryFree: normalizeIsDeliveryFree(product.isDeliveryFree)
         });
     }
 
@@ -802,7 +1626,6 @@ function renderCart() {
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
     const $cartItems = $('#cartItems');
     const $cartSummary = $('#cartSummary');
-    const $cartTotals = $('#cartTotals');
     
     if (cart.length === 0) {
         $cartItems.html(`
@@ -815,8 +1638,10 @@ function renderCart() {
             </div>
         `);
         clearDeliveryDetails();
-        $cartTotals.hide();
-        $cartSummary.hide();
+        resetCartCheckoutFlow();
+        $('#cartStageItemsFooter').hide();
+        $('#cartCheckoutSteps').addClass('hidden');
+        $cartSummary.show();
         return;
     }
 
@@ -836,108 +1661,68 @@ function renderCart() {
                 </div>
             </div>
             <div class="cart-actions">
-                <button class="remove-btn" data-id="${item.id}">Remove</button>
+                <button type="button" class="remove-btn" data-id="${item.id}" aria-label="Remove ${item.name} from cart">
+                    <svg class="remove-btn__icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 6h18"/>
+                        <path d="M8 6V4h8v2"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                        <path d="M10 11v6"/>
+                        <path d="M14 11v6"/>
+                    </svg>
+                    <span class="remove-btn__label">Remove</span>
+                </button>
             </div>
         </div>
     `).join('');
     
     $cartItems.html(html);
+    $('#cartStageItemsFooter').show();
+    $('#cartCheckoutSteps').removeClass('hidden');
     $cartSummary.show();
+    setCartCheckoutStage(cartCheckoutStage);
     refreshCartSummaryState(cart);
 }
 
-function normalizeDistrictName(district) {
-    const normalized = String(district || '').trim().toLowerCase();
-    if (normalized === 'jaffa') return 'jaffna';
-    if (normalized === 'batticallo') return 'batticaloa';
-    if (normalized === 'amapara') return 'ampara';
-    return normalized;
-}
-
-function normalizeDeliveryType(deliveryType) {
-    const normalized = String(deliveryType || '').trim().toLowerCase();
-    return normalized.includes('cash') ? 'cashOnDelivery' : 'courier';
-}
-
-function parseWeightToKg(weightValue) {
-    if (typeof weightValue !== 'string') return null;
-    const normalized = weightValue.trim().toLowerCase();
-    const match = normalized.match(/^(\d+(?:\.\d+)?)\s*(kg|g|ml)$/);
-    if (!match) return null;
-
-    const value = Number(match[1]);
-    const unit = match[2];
-    if (!Number.isFinite(value) || value <= 0) return null;
-
-    return unit === 'kg' ? value : value / 1000;
-}
-
-function getProductWeightKgById(productId) {
-    const product = products.find((p) => Number(p.id) === Number(productId));
-    if (!product) return null;
-    return parseWeightToKg(product.weight);
-}
-
-function getCartWeightKg(items) {
-    const totalWeight = items.reduce((sum, item) => {
-        const quantity = Math.max(1, Number(item.quantity) || 1);
-        const itemWeightKg =
-            parseWeightToKg(item.weight) ??
-            getProductWeightKgById(item.id) ??
-            0;
-        return sum + (itemWeightKg * quantity);
-    }, 0);
-
-    return Math.max(totalWeight, 0.01);
-}
-
-function getShippingFee(items, deliveryDetails) {
-    if (!deliveryDetails || !hasDeliveryDetails(deliveryDetails)) {
-        return 0;
+function updateSummary(cart) {
+    const stored = loadPaymentSummaryFromStorage('cart');
+    if (stored) {
+        applyBackendSummaryToHiddenFields(stored, 'cart');
+        return;
     }
-    const deliveryTypeKey = normalizeDeliveryType(deliveryDetails.deliveryType);
-    const isContainHairOil = Array.isArray(items) && items.some(item =>
-        String(item?.name || '').toLowerCase().includes('hair oil')
-    );
-    const isContainNeemComb = Array.isArray(items) && items.some(item =>
-        String(item?.name || '').toLowerCase().includes('neem comb')
-    );
-    console.log('isContainNeemComb :::: '+isContainNeemComb)
-    const normalizedDistrict = normalizeDistrictName(deliveryDetails.district);
-    const districtGroup = SPECIAL_RATE_DISTRICTS.has(normalizedDistrict) ? 'special' : 'normal';
-    const rates = SHIPPING_RATES[districtGroup][deliveryTypeKey] || SHIPPING_RATES[districtGroup].courier;
-
-    const totalWeightKg = getCartWeightKg(items);
-    const billableKg = Math.max(1, Math.ceil(totalWeightKg));
-
-    if ((isContainHairOil || isContainNeemComb) && deliveryTypeKey === 'courier') {
-        if(totalWeightKg <= 1) {
-            return 0;
-        } else if (totalWeightKg <= 2) {
-            return 250;
-        } else if (totalWeightKg <= 3) {
-            return 400;
-        } else {
-            return 550;
-        }
-    }
-
-    if (billableKg <= 3) {
-        return rates[billableKg - 1];
-    }
-
-    const perExtraKg = rates[2] - rates[1];
-    return rates[2] + ((billableKg - 3) * perExtraKg);
+    const subtotal = computeOrderSubtotal(cart);
+    $('#subtotal').text(formatPrice(subtotal));
+    $('#shipping').text('—');
+    $('#total').text(formatPrice(subtotal));
 }
 
-function updateSummary(cart, deliveryDetails = getDeliveryDetails()) {
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const shipping = getShippingFee(cart, deliveryDetails);
-    const total = subtotal + shipping;
+function getDeliveryTypeFieldMarkup(hiddenInputId, labelId) {
+    return `
+        <div class="cart-form-group cart-form-group--delivery-type">
+            <span id="${labelId}">Delivery Type</span>
+            <input type="hidden" id="${hiddenInputId}" value="">
+            <div class="delivery-type-options" role="group" aria-labelledby="${labelId}">
+                <label class="delivery-type-option">
+                    <input type="checkbox" class="delivery-type-checkbox" value="Courier" data-delivery-type-target="#${hiddenInputId}">
+                    <span class="delivery-type-option__text">Courier</span>
+                </label>
+                <label class="delivery-type-option">
+                    <input type="checkbox" class="delivery-type-checkbox" value="Cash on delivery" data-delivery-type-target="#${hiddenInputId}">
+                    <span class="delivery-type-option__text">Cash on delivery</span>
+                </label>
+            </div>
+        </div>
+    `;
+}
 
-    $('#subtotal').text('Rs. ' + subtotal.toLocaleString());
-    $('#shipping').text(shipping === 0 ? 'Free' : 'Rs. ' + shipping.toLocaleString());
-    $('#total').text('Rs. ' + total.toLocaleString());
+function resetDeliveryTypeCheckboxes(hiddenInputId) {
+    const hiddenInput = document.getElementById(hiddenInputId);
+    if (hiddenInput) {
+        hiddenInput.value = '';
+    }
+    document.querySelectorAll(`.delivery-type-checkbox[data-delivery-type-target="#${hiddenInputId}"]`)
+        .forEach((checkbox) => {
+            checkbox.checked = false;
+        });
 }
 
 function getDeliveryDetails() {
@@ -1042,6 +1827,11 @@ function isCartOrderSummaryUnlocked(details = getDeliveryDetails()) {
 }
 
 function ensureBuyNowPopup() {
+    const existing = document.getElementById('buyNowDeliveryPopup');
+    if (existing && !document.getElementById('buyNowPopupPanel')) {
+        existing.remove();
+        document.getElementById('buyNowOverlay')?.remove();
+    }
     if (document.getElementById('buyNowDeliveryPopup')) return;
     const districtOptions = SRI_LANKA_DISTRICTS
         .map((district) => `<option value="${district}">${district}</option>`)
@@ -1050,66 +1840,99 @@ function ensureBuyNowPopup() {
     const modalMarkup = `
         <div class="buy-now-popup hidden" id="buyNowDeliveryPopup" role="dialog" aria-modal="true" aria-labelledby="buyNowPopupTitle">
             <div class="buy-now-popup__backdrop" id="buyNowPopupBackdrop"></div>
-            <div class="buy-now-popup__panel" role="document">
+            <div class="buy-now-popup__panel" id="buyNowPopupPanel" role="document">
                 <div class="buy-now-popup__header">
-                    <h3 id="buyNowPopupTitle">Delivery Details</h3>
-                    <button type="button" class="buy-now-popup__close" id="buyNowPopupClose" aria-label="Close delivery details popup">&times;</button>
+                    <h2 id="buyNowPopupTitle">Buy Now</h2>
+                    <button type="button" class="close-btn buy-now-popup__close" id="buyNowPopupClose" aria-label="Close buy now checkout">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" aria-hidden="true">
+                            <path d="M18 6 6 18M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
-                <p class="buy-now-popup__hint">Enter delivery details to calculate shipping and total price.</p>
-                <form id="buyNowDeliveryForm" class="buy-now-popup__form">
-                    <label class="buy-now-popup__group buy-now-popup__group--delivery-type">
-                        <span>Delivery Type</span>
-                        <select id="buyNowDeliveryType" required>
-                            <option value="Courier">Courier</option>
-                            <option value="Cash on delivery">Cash on delivery</option>
-                        </select>
-                    </label>
-                    <label class="buy-now-popup__group buy-now-popup__group--customer-name">
-                        <span>Full name</span>
-                        <input type="text" id="buyNowCustomerName" name="customerName" autocomplete="name" inputmode="text" placeholder="Your full name" required maxlength="120">
-                    </label>
-                    <label class="buy-now-popup__group buy-now-popup__group--address1">
-                        <span>Address Line 1</span>
-                        <input type="text" id="buyNowAddress1" placeholder="House no, street" required>
-                    </label>
-                    <label class="buy-now-popup__group buy-now-popup__group--address2">
-                        <span>Address Line 2 <span class="field-optional">(optional)</span></span>
-                        <input type="text" id="buyNowAddress2" placeholder="Area / city">
-                    </label>
-                    <label class="buy-now-popup__group buy-now-popup__group--whatsapp">
-                        <span>WhatsApp Number</span>
-                        <input type="tel" id="buyNowWhatsAppNumber" inputmode="numeric" maxlength="10" autocomplete="tel" placeholder="0771234567" required>
-                    </label>
-                    <label class="buy-now-popup__group buy-now-popup__group--other-phone">
-                        <span>Other Phone Number</span>
-                        <input type="tel" id="buyNowOtherPhoneNumber" inputmode="numeric" maxlength="10" autocomplete="tel" placeholder="0712345678" required>
-                    </label>
-                    <p class="buy-now-popup__phone-error hidden" id="buyNowPhoneError" role="alert" aria-live="polite"></p>
-                    <label class="buy-now-popup__group buy-now-popup__group--district">
-                        <span>District</span>
-                        <select id="buyNowDistrict" required>    
-                            ${districtOptions}
-                        </select>
-                    </label>
-                    <div class="buy-now-popup__price-summary hidden" id="buyNowPriceSummary">
-                        <div class="buy-now-popup__price-row">
-                            <span>Subtotal</span>
-                            <span id="buyNowSubtotal">Rs. 0</span>
+                <div class="cart-checkout-body buy-now-popup__body" id="buyNowCheckoutBody">
+                    <div class="checkout-steps hidden" id="buyNowCheckoutSteps" aria-label="Checkout progress">
+                        <span class="checkout-steps__item checkout-steps__item--active" data-step="items">Product</span>
+                        <span class="checkout-steps__item" data-step="delivery">Delivery</span>
+                        <span class="checkout-steps__item" data-step="payment">Payment</span>
+                    </div>
+
+                    <div class="cart-stage-view" id="buyNowStageItems">
+                        <div class="cart-stage-view__scroll" id="buyNowItemsScroll">
+                            <div id="buyNowStageProductContent"></div>
                         </div>
-                        <div class="buy-now-popup__price-row">
-                            <span>Shipping</span>
-                            <span id="buyNowShipping">Rs. 0</span>
-                        </div>
-                        <div class="buy-now-popup__price-row buy-now-popup__price-row--total">
-                            <span>Total</span>
-                            <span id="buyNowTotal">Rs. 0</span>
+                        <div class="cart-stage-view__footer" id="buyNowStageItemsFooter">
+                            <button type="button" class="checkout-btn checkout-btn--primary" id="buyNowEnterDeliveryBtn">Enter delivery details</button>
                         </div>
                     </div>
-                    <div class="buy-now-popup__actions">
-                        <button type="button" class="buy-now-popup__btn buy-now-popup__btn--ghost" id="buyNowPopupCancel">Cancel</button>
-                        <button type="submit" class="buy-now-popup__btn buy-now-popup__btn--primary" disabled>Order Now</button>
+
+                    <div class="cart-stage-view hidden" id="buyNowStageDelivery">
+                        <div class="cart-stage-view__scroll" id="buyNowDeliveryScroll">
+                            <button type="button" class="checkout-stage-back" id="buyNowBackToProduct" aria-label="Back to product">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                                Back to product
+                            </button>
+                            <form id="buyNowDeliveryForm" class="cart-delivery-form">
+                            <label class="cart-form-group cart-form-group--customer-name">
+                                <span>Full name</span>
+                                <input type="text" id="buyNowCustomerName" name="customerName" autocomplete="name" inputmode="text" placeholder="Your full name" required maxlength="120">
+                            </label>
+                            <label class="cart-form-group cart-form-group--address1">
+                                <span>Address Line 1</span>
+                                <input type="text" id="buyNowAddress1" placeholder="House no, street" required>
+                            </label>
+                            <label class="cart-form-group cart-form-group--address2">
+                                <span>Address Line 2 <span class="field-optional">(optional)</span></span>
+                                <input type="text" id="buyNowAddress2" placeholder="Area / city">
+                            </label>
+                            <div class="checkout-form-row checkout-form-row--phones">
+                            <label class="cart-form-group cart-form-group--whatsapp">
+                                <span>WhatsApp Number</span>
+                                <input type="tel" id="buyNowWhatsAppNumber" inputmode="numeric" maxlength="10" autocomplete="tel" placeholder="0771234567" required>
+                            </label>
+                            <label class="cart-form-group cart-form-group--other-phone">
+                                <span>Other Phone Number</span>
+                                <input type="tel" id="buyNowOtherPhoneNumber" inputmode="numeric" maxlength="10" autocomplete="tel" placeholder="0712345678" required>
+                            </label>
+                            </div>
+                            <p class="cart-phone-error hidden" id="buyNowPhoneError" role="alert" aria-live="polite"></p>
+                            <div class="checkout-form-row checkout-form-row--type-district">
+                            ${getDeliveryTypeFieldMarkup('buyNowDeliveryType', 'buyNowDeliveryTypeLabel')}
+                            <label class="cart-form-group cart-form-group--district">
+                                <span>District</span>
+                                <select id="buyNowDistrict" required>
+                                    ${districtOptions}
+                                </select>
+                            </label>
+                            </div>
+                            </form>
+                        </div>
+                        <div class="cart-stage-view__footer">
+                            <button type="button" class="checkout-btn checkout-btn--secondary" id="buyNowViewPaymentSummaryBtn" disabled aria-label="View payment summary">
+                                View payment summary
+                            </button>
+                        </div>
                     </div>
-                </form>
+
+                    <div class="cart-stage-view hidden" id="buyNowStagePayment">
+                        <div class="cart-stage-view__scroll" id="buyNowPaymentScroll">
+                            <button type="button" class="checkout-stage-back" id="buyNowBackToDelivery" aria-label="Back to delivery details">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                                Back to delivery
+                            </button>
+                            <div class="checkout-payment-summary" id="buyNowPaymentSummary" aria-live="polite"></div>
+                            <div class="price-preview-data visually-hidden" aria-hidden="true">
+                                <span id="buyNowSubtotal">Rs. 0</span>
+                                <span id="buyNowShipping">Rs. 0</span>
+                                <span id="buyNowTotal">Rs. 0</span>
+                            </div>
+                        </div>
+                        <div class="cart-stage-view__footer checkout-stage-actions">
+                            <button type="button" class="checkout-stage-btn checkout-stage-btn--cancel" id="buyNowPaymentCancel">Cancel</button>
+                            <button type="button" class="checkout-btn checkout-btn--primary" id="buyNowCheckoutBtn">Buy now</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     `;
@@ -1132,8 +1955,8 @@ function openBuyNowPopup(product) {
     document.body.classList.add('buy-now-popup-open');
     popup.dataset.productId = String(product.id);
 
-    const firstInput = document.getElementById('buyNowDeliveryType');
-    firstInput?.focus();
+    resetBuyNowCheckoutFlow();
+    renderBuyNowProductStage();
     renderBuyNowPricePreview();
 }
 
@@ -1147,28 +1970,14 @@ function closeBuyNowPopup() {
 
     const form = document.getElementById('buyNowDeliveryForm');
     form?.reset();
-    const summary = document.getElementById('buyNowPriceSummary');
-    summary?.classList.add('hidden');
+    resetDeliveryTypeCheckboxes('buyNowDeliveryType');
     $('#buyNowPhoneError').text('').addClass('hidden');
     wasBuyNowPricePreviewComplete = false;
-    updateBuyNowSubmitButtonState();
+    resetBuyNowCheckoutFlow();
 }
 
 function ensureOrderFeedbackPopup() {
-    const existing = document.getElementById('orderFeedbackPopup');
-    if (existing && !document.getElementById('orderFeedbackDownloadReceipt')) {
-        const actions = existing.querySelector('.order-feedback-popup__actions');
-        if (actions) {
-            actions.id = 'orderFeedbackActions';
-            actions.insertAdjacentHTML('afterbegin', `
-                <button type="button" class="order-feedback-popup__btn order-feedback-popup__download-receipt-btn hidden" id="orderFeedbackDownloadReceipt">
-                    <span class="order-feedback-popup__download-icon" aria-hidden="true">↓</span>
-                    Download receipt (PDF)
-                </button>
-            `);
-        }
-    }
-    if (existing) return;
+    if (document.getElementById('orderFeedbackPopup')) return;
 
     const popupMarkup = `
         <div class="order-feedback-popup hidden" id="orderFeedbackPopup" role="dialog" aria-modal="true" aria-labelledby="orderFeedbackTitle">
@@ -1180,10 +1989,6 @@ function ensureOrderFeedbackPopup() {
                 </div>
                 <div class="order-feedback-popup__message" id="orderFeedbackMessage"></div>
                 <div class="order-feedback-popup__actions" id="orderFeedbackActions">
-                    <button type="button" class="order-feedback-popup__btn order-feedback-popup__download-receipt-btn hidden" id="orderFeedbackDownloadReceipt">
-                        <span class="order-feedback-popup__download-icon" aria-hidden="true">↓</span>
-                        Download receipt (PDF)
-                    </button>
                     <button type="button" class="order-feedback-popup__btn" id="orderFeedbackOk">OK</button>
                 </div>
             </div>
@@ -1195,15 +2000,12 @@ function ensureOrderFeedbackPopup() {
 
 function restoreOrderFeedbackPopupChrome() {
     const ok = document.getElementById('orderFeedbackOk');
-    const downloadBtn = document.getElementById('orderFeedbackDownloadReceipt');
     const closeBtn = document.getElementById('orderFeedbackClose');
+    const actionsEl = document.getElementById('orderFeedbackActions');
     const popup = document.getElementById('orderFeedbackPopup');
     ok?.classList.remove('hidden');
-    downloadBtn?.classList.add('hidden');
     closeBtn?.classList.remove('hidden');
-    if (downloadBtn) {
-        downloadBtn.disabled = false;
-    }
+    actionsEl?.classList.remove('hidden');
     if (popup) {
         delete popup.dataset.receiptDownloadUrl;
     }
@@ -1211,8 +2013,8 @@ function restoreOrderFeedbackPopupChrome() {
 
 function configureOrderSuccessPopupActions(downloadUrl) {
     const ok = document.getElementById('orderFeedbackOk');
-    const downloadBtn = document.getElementById('orderFeedbackDownloadReceipt');
     const closeBtn = document.getElementById('orderFeedbackClose');
+    const actionsEl = document.getElementById('orderFeedbackActions');
     const popup = document.getElementById('orderFeedbackPopup');
     const url = String(downloadUrl || '').trim();
     if (!popup) return;
@@ -1222,14 +2024,11 @@ function configureOrderSuccessPopupActions(downloadUrl) {
     if (url) {
         popup.dataset.receiptDownloadUrl = url;
         ok?.classList.add('hidden');
-        downloadBtn?.classList.remove('hidden');
-        if (downloadBtn) {
-            downloadBtn.disabled = false;
-        }
+        actionsEl?.classList.add('hidden');
     } else {
         delete popup.dataset.receiptDownloadUrl;
         ok?.classList.remove('hidden');
-        downloadBtn?.classList.add('hidden');
+        actionsEl?.classList.remove('hidden');
     }
 }
 
@@ -1283,6 +2082,7 @@ function closeOrderFeedbackPopup() {
     const titleEl = document.getElementById('orderFeedbackTitle');
     if (titleEl) {
         titleEl.textContent = 'Order Update';
+        titleEl.classList.remove('visually-hidden');
     }
     restoreOrderFeedbackPopupChrome();
 }
@@ -1293,14 +2093,11 @@ function ensurePendingOrderConfirmPopup() {
     document.body.insertAdjacentHTML('beforeend', `
         <div class="order-feedback-popup hidden" id="pendingOrderConfirmPopup" role="dialog" aria-modal="true" aria-labelledby="pendingOrderConfirmTitle">
             <div class="order-feedback-popup__backdrop" id="pendingOrderConfirmBackdrop"></div>
-            <div class="order-feedback-popup__panel" role="document">
-                <div class="order-feedback-popup__header">
-                    <h3 id="pendingOrderConfirmTitle">Pending order</h3>
-                </div>
-                <div class="order-feedback-popup__message" id="pendingOrderConfirmMessage"></div>
+            <div class="order-feedback-popup__panel order-feedback-popup__panel--confirm" role="document">
+                <div class="order-feedback-popup__message order-feedback-popup__message--flush" id="pendingOrderConfirmMessage"></div>
                 <div class="order-feedback-popup__actions order-feedback-popup__actions--split">
-                    <button type="button" class="order-feedback-popup__btn order-feedback-popup__btn--secondary" id="pendingOrderConfirmCancel">Cancel</button>
-                    <button type="button" class="order-feedback-popup__btn" id="pendingOrderConfirmReplace">Replace previous order</button>
+                    <button type="button" class="order-feedback-popup__btn order-feedback-popup__btn--secondary" id="pendingOrderConfirmCancel">Keep existing order</button>
+                    <button type="button" class="order-feedback-popup__btn" id="pendingOrderConfirmReplace">Replace with new order</button>
                 </div>
             </div>
         </div>
@@ -1328,11 +2125,7 @@ function showPendingOrderReplaceConfirm(message, existingOrderId, onAccept) {
 
     pendingOrderReplaceAcceptHandler = typeof onAccept === 'function' ? onAccept : null;
 
-    const idLine = existingOrderId != null && String(existingOrderId).length
-        ? `<p class="pending-order-confirm__id">Existing order ID: <strong>${escapeHtml(String(existingOrderId))}</strong></p>`
-        : '';
-
-    messageEl.innerHTML = `<p class="pending-order-confirm__lead">${escapeHtml(String(message || ''))}</p>${idLine}`;
+    messageEl.innerHTML = buildPendingOrderConfirmModalHtml(message, existingOrderId);
 
     popup.classList.remove('hidden');
 
@@ -1355,18 +2148,19 @@ function handleSuccessfulOrderSubmit(response, context) {
     const serverMessage = response?.message || 'Order submitted successfully.';
     showOrderSuccessPopup(serverMessage, response);
     if (context.mode === 'cart') {
+        clearPaymentSummaryCache('cart');
         localStorage.removeItem('cart');
         renderCart();
         updateCartBadge();
-        $('#cartSidepanel').removeClass('active');
-        $('#cartOverlay').removeClass('active');
+        closeCartPanel();
     } else if (context.mode === 'buyNow') {
+        clearPaymentSummaryCache('buyNow');
         closeBuyNowPopup();
     }
 }
 
-function handleOrderSubmitFailure(xhr, items, deliveryDetails, priceOverrides) {
-    const waText = buildOrderWhatsAppText(items, deliveryDetails, priceOverrides, xhr);
+function handleOrderSubmitFailure(xhr, items, deliveryDetails, context = 'cart') {
+    const waText = buildOrderWhatsAppText(items, deliveryDetails, context, xhr);
     openWhatsAppOrderFallback(waText);
     showApiResponsePopup(ORDER_FAIL_WHATSAPP_USER_MESSAGE);
 }
@@ -1386,49 +2180,46 @@ function getBuyNowItemFromPopup() {
         name: product.name,
         price: Number(product.price),
         weight: product.weight || '',
-        quantity: 1
+        quantity: 1,
+        isDeliveryFree: normalizeIsDeliveryFree(product.isDeliveryFree)
     };
 }
 
-function renderBuyNowPricePreview() {
-    const summary = document.getElementById('buyNowPriceSummary');
-    if (!summary) return;
-
-    const item = getBuyNowItemFromPopup();
+function refreshBuyNowSummaryState() {
     const deliveryDetails = getBuyNowDeliveryDetails();
+    const unlocked = Boolean(getBuyNowItemFromPopup()) && isCartOrderSummaryUnlocked(deliveryDetails);
+    const wasUnlocked = wasBuyNowPricePreviewComplete;
+    const storedSummary = loadPaymentSummaryFromStorage('buyNow');
 
-    if (!item || !hasDeliveryDetails(deliveryDetails) || !hasValidOrderPhones(deliveryDetails)) {
-        summary.classList.add('hidden');
-        wasBuyNowPricePreviewComplete = false;
-        updateBuyNowSubmitButtonState();
-        return;
+    $('#buyNowViewPaymentSummaryBtn').prop('disabled', !unlocked);
+    $('#buyNowCheckoutBtn').prop('disabled', !storedSummary);
+
+    if (unlocked) {
+        const item = getBuyNowItemFromPopup();
+        if (buyNowCheckoutStage === CHECKOUT_STAGES.PAYMENT && storedSummary && item) {
+            const panel = document.getElementById('buyNowPaymentSummary');
+            if (panel) {
+                panel.innerHTML = buildInlinePaymentSummaryHtml([item], deliveryDetails, storedSummary, 'buyNow');
+            }
+        }
+        if (!wasUnlocked && buyNowCheckoutStage === CHECKOUT_STAGES.DELIVERY) {
+            scrollBuyNowPreviewActionsIntoView();
+        }
     }
 
-    const items = [item];
-    const subtotal = items.reduce((sum, cartItem) => sum + (Number(cartItem.price) * (Number(cartItem.quantity) || 1)), 0);
-    const shipping = getShippingFee(items, deliveryDetails);
-    const total = subtotal + shipping;
+    wasBuyNowPricePreviewComplete = unlocked;
+}
 
-    $('#buyNowSubtotal').text(formatPrice(subtotal));
-    $('#buyNowShipping').text(formatPrice(shipping));
-    $('#buyNowTotal').text(formatPrice(total));
-    summary.classList.remove('hidden');
-    if (!wasBuyNowPricePreviewComplete) {
-        scrollBuyNowPriceSummaryIntoView();
-    }
-    wasBuyNowPricePreviewComplete = true;
-    updateBuyNowSubmitButtonState();
+function renderBuyNowPricePreview() {
+    refreshBuyNowSummaryState();
 }
 
 function updateBuyNowSubmitButtonState() {
-    const btn = document.querySelector('#buyNowDeliveryForm button[type="submit"]');
-    if (!btn) return;
-    const d = getBuyNowDeliveryDetails();
-    btn.disabled = !isCartOrderSummaryUnlocked(d);
+    renderBuyNowPricePreview();
 }
 
 function clearDeliveryDetails() {
-    $('#deliveryType').val('');
+    resetDeliveryTypeCheckboxes('deliveryType');
     $('#deliveryCustomerName').val('');
     $('#deliveryAddress1').val('');
     $('#deliveryAddress2').val('');
@@ -1437,25 +2228,26 @@ function clearDeliveryDetails() {
     $('#deliveryDistrict').val('');
     $('#deliveryPhoneError').text('').addClass('hidden');
     wasCartOrderSummaryUnlocked = false;
+    resetCartCheckoutFlow();
 }
 
 function scrollCartSummaryToBottom() {
-    const cartSummaryEl = $('#cartSummary').get(0);
-    if (!cartSummaryEl) return;
+    const scrollEl = document.getElementById('cartDeliveryScroll') || document.getElementById('cartItemsScroll');
+    if (!scrollEl) return;
     requestAnimationFrame(() => {
-        cartSummaryEl.scrollTo({
-            top: cartSummaryEl.scrollHeight,
+        scrollEl.scrollTo({
+            top: scrollEl.scrollHeight,
             behavior: 'smooth'
         });
     });
 }
 
-function scrollBuyNowPriceSummaryIntoView() {
-    const panel = document.querySelector('#buyNowDeliveryPopup .buy-now-popup__panel');
-    if (!panel) return;
+function scrollBuyNowPreviewActionsIntoView() {
+    const scrollEl = document.getElementById('buyNowDeliveryScroll');
+    if (!scrollEl) return;
     requestAnimationFrame(() => {
-        panel.scrollTo({
-            top: panel.scrollHeight,
+        scrollEl.scrollTo({
+            top: scrollEl.scrollHeight,
             behavior: 'smooth'
         });
     });
@@ -1464,7 +2256,7 @@ function scrollBuyNowPriceSummaryIntoView() {
 let cartPhoneScrollDebounceTimer = null;
 
 function scrollCartPanelToward(selector) {
-    const panel = document.getElementById('cartSummary');
+    const panel = document.getElementById('cartDeliveryScroll') || document.getElementById('cartItemsScroll');
     const target = document.querySelector(selector);
     if (!panel || !target) return;
     requestAnimationFrame(() => {
@@ -1498,7 +2290,9 @@ function scheduleScrollCartToPhoneFieldsIfNeeded() {
 let buyNowPhoneScrollDebounceTimer = null;
 
 function scrollBuyNowPanelToward(selector) {
-    const panel = document.querySelector('#buyNowDeliveryPopup .buy-now-popup__panel');
+    const panel = document.getElementById('buyNowDeliveryScroll')
+        || document.getElementById('buyNowItemsScroll')
+        || document.getElementById('buyNowPaymentScroll');
     const target = document.querySelector(selector);
     if (!panel || !target) return;
     requestAnimationFrame(() => {
@@ -1520,9 +2314,9 @@ function scheduleScrollBuyNowToPhoneFieldsIfNeeded() {
             || String(d.otherPhoneNumber || '').trim()
         );
         if (startedElsewhereWithoutName) {
-            scrollBuyNowPanelToward('#buyNowDeliveryForm .buy-now-popup__group--customer-name');
+            scrollBuyNowPanelToward('#buyNowDeliveryForm .cart-form-group--customer-name');
         } else if (hasDeliveryDetails(d) && !hasValidOrderPhones(d)) {
-            scrollBuyNowPanelToward('#buyNowDeliveryForm .buy-now-popup__group--whatsapp');
+            scrollBuyNowPanelToward('#buyNowDeliveryForm .cart-form-group--whatsapp');
         }
     }, 450);
 }
@@ -1531,19 +2325,27 @@ function refreshCartSummaryState(cart) {
     const details = getDeliveryDetails();
     const unlocked = isCartOrderSummaryUnlocked(details);
     const wasUnlocked = wasCartOrderSummaryUnlocked;
-    const $cartTotals = $('#cartTotals');
+    const storedSummary = loadPaymentSummaryFromStorage('cart');
+
+    $('#cartViewPaymentSummaryBtn').prop('disabled', !unlocked);
+    $('#checkoutBtn').prop('disabled', !storedSummary);
 
     if (unlocked) {
-        updateSummary(cart, details);
-        $cartTotals.show();
-        if (!wasUnlocked) {
+        if (cartCheckoutStage === CHECKOUT_STAGES.PAYMENT && storedSummary) {
+            const panel = document.getElementById('cartPaymentSummary');
+            if (panel) {
+                panel.innerHTML = buildInlinePaymentSummaryHtml(cart, details, storedSummary, 'cart');
+                scrollCartStageToTop(CHECKOUT_STAGES.PAYMENT);
+            }
+        } else {
+            updateSummary(cart);
+        }
+        if (!wasUnlocked && cartCheckoutStage === CHECKOUT_STAGES.DELIVERY) {
             scrollCartSummaryToBottom();
         }
-    } else {
-        $cartTotals.hide();
     }
+
     wasCartOrderSummaryUnlocked = unlocked;
-    $('#checkoutBtn').prop('disabled', !unlocked);
 }
 
 function updateQuantity(id, change) {
@@ -1557,6 +2359,7 @@ function updateQuantity(id, change) {
             cart = cart.filter(i => i.id !== id);
         }
         localStorage.setItem('cart', JSON.stringify(cart));
+        clearPaymentSummaryCache('cart');
         renderCart();
         updateCartBadge();
     }
@@ -1566,14 +2369,9 @@ function removeItem(id) {
     let cart = JSON.parse(localStorage.getItem('cart')) || [];
     cart = cart.filter(i => i.id !== id);
     localStorage.setItem('cart', JSON.stringify(cart));
+    clearPaymentSummaryCache('cart');
     renderCart();
      updateCartBadge();
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text == null ? '' : String(text);
-    return div.innerHTML;
 }
 
 /** Extract numeric order ID from API success message, e.g. "… Order ID: 123456". */
@@ -2116,6 +2914,140 @@ function buildWhatsAppInquiryUrl(orderId) {
     return `https://wa.me/${FASA_ORDERS_WHATSAPP_PHONE}?text=${encodeURIComponent(text)}`;
 }
 
+async function copyTextToClipboard(text) {
+    const value = String(text || '').trim();
+    if (!value) return false;
+    try {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(value);
+            return true;
+        }
+    } catch {
+        /* fall through */
+    }
+    const textarea = document.createElement('textarea');
+    textarea.value = value;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+        return document.execCommand('copy');
+    } catch {
+        return false;
+    } finally {
+        textarea.remove();
+    }
+}
+
+function buildOrderSuccessModalHtml(config) {
+    const {
+        serverMessage,
+        orderId,
+        orderToken,
+        downloadUrl,
+        waUrl,
+        displayPhone
+    } = config;
+    const primary = String(serverMessage || 'Order submitted successfully.');
+    const reference = orderId || orderToken;
+    const refLabel = orderId ? 'Order ID' : 'Order reference';
+
+    const refBlock = reference
+        ? `<div class="order-confirm-modal__ref-card">
+            <div class="order-confirm-modal__ref-main">
+                <span class="order-confirm-modal__ref-label">${escapeHtml(refLabel)}</span>
+                <strong class="order-confirm-modal__ref-value">${escapeHtml(reference)}</strong>
+            </div>
+            <button type="button" class="order-confirm-modal__copy-btn" data-copy-text="${escapeHtml(reference)}" aria-label="Copy order reference">Copy</button>
+        </div>`
+        : '';
+
+    const serverNote = primary && !/order submitted successfully/i.test(primary)
+        ? `<p class="order-confirm-modal__server-note">${escapeHtml(primary)}</p>`
+        : '';
+
+    const receiptBlock = downloadUrl
+        ? `<div class="order-confirm-modal__card order-confirm-modal__card--receipt">
+            <div class="order-confirm-modal__card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+            </div>
+            <div class="order-confirm-modal__card-body">
+                <h4 class="order-confirm-modal__card-title">Your receipt</h4>
+                <p class="order-confirm-modal__card-text">Download your PDF receipt for your records.</p>
+                <button type="button" class="order-confirm-modal__download-btn" id="orderFeedbackDownloadReceipt">
+                    <svg class="order-confirm-modal__download-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+                    Download receipt (PDF)
+                </button>
+            </div>
+        </div>`
+        : `<div class="order-confirm-modal__card order-confirm-modal__card--notice">
+            <p class="order-confirm-modal__card-text">Your receipt is being prepared. Save your order reference above and contact us on WhatsApp if you need a copy.</p>
+        </div>`;
+
+    return ''
+        + '<div class="order-confirm-modal order-confirm-modal--success" role="status">'
+        + '<div class="order-confirm-modal__hero">'
+        + '<div class="order-confirm-modal__check" aria-hidden="true">'
+        + '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'
+        + '</div>'
+        + '<h4 class="order-confirm-modal__headline" id="orderFeedbackTitleVisible">Order confirmed!</h4>'
+        + '<p class="order-confirm-modal__tagline">Thank you — we have received your order.</p>'
+        + '</div>'
+        + refBlock
+        + serverNote
+        + receiptBlock
+        + '<div class="order-confirm-modal__support">'
+        + '<p class="order-confirm-modal__support-label">Questions about your order?</p>'
+        + `<a class="order-confirm-modal__wa-link" href="${escapeHtml(waUrl)}" target="_blank" rel="noopener noreferrer">`
+        + '<span class="order-confirm-modal__wa-icon" aria-hidden="true">'
+        + '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>'
+        + '</span>'
+        + `Message us on WhatsApp (${escapeHtml(displayPhone)})`
+        + '</a>'
+        + '</div>'
+        + '</div>';
+}
+
+function buildPendingOrderConfirmModalHtml(message, existingOrderId) {
+    const idBlock = existingOrderId != null && String(existingOrderId).length
+        ? `<div class="order-confirm-modal__ref-card order-confirm-modal__ref-card--warning">
+            <span class="order-confirm-modal__ref-label">Existing order ID</span>
+            <strong class="order-confirm-modal__ref-value">${escapeHtml(String(existingOrderId))}</strong>
+        </div>`
+        : '';
+
+    return ''
+        + '<div class="order-confirm-modal order-confirm-modal--pending">'
+        + '<div class="order-confirm-modal__hero order-confirm-modal__hero--warning">'
+        + '<div class="order-confirm-modal__warn-icon" aria-hidden="true">!</div>'
+        + '<h4 class="order-confirm-modal__headline" id="pendingOrderConfirmTitle">Pending order found</h4>'
+        + '<p class="order-confirm-modal__tagline">You already have an order waiting to be processed.</p>'
+        + '</div>'
+        + `<p class="order-confirm-modal__message">${escapeHtml(String(message || ''))}</p>`
+        + idBlock
+        + '<div class="order-confirm-modal__notice">'
+        + '<strong>Replace previous order?</strong>'
+        + '<p>Choosing <em>Replace previous order</em> will cancel your existing pending order and submit this new cart instead.</p>'
+        + '</div>'
+        + '</div>';
+}
+
+function stripOrderConfirmLegacyTrackUi(container) {
+    if (!container) return;
+    container.querySelectorAll(
+        '.order-confirm-modal__track, .order-feedback-popup__track-row'
+    ).forEach((el) => el.remove());
+    container.querySelectorAll('a, button').forEach((el) => {
+        const label = (el.textContent || '').trim();
+        const copyTarget = el.getAttribute('data-copy-text') || '';
+        if (label === 'Track order status' || label === 'Copy link' || copyTarget.includes('/track-order')) {
+            el.remove();
+        }
+    });
+}
+
 /** After successful checkout: receipt download (tracking link is on the receipt). */
 function showOrderSuccessPopup(serverMessage, apiResponse = null) {
     ensureOrderFeedbackPopup();
@@ -2134,31 +3066,19 @@ function showOrderSuccessPopup(serverMessage, apiResponse = null) {
 
     if (titleEl) {
         titleEl.textContent = 'Order confirmed';
+        titleEl.classList.add('visually-hidden');
     }
     panelEl?.classList.add('order-feedback-popup__panel--success');
 
-    const receiptMissingNote = !downloadUrl
-        ? '<p class="order-feedback-popup__receipt-missing">Receipt is not ready yet. Please save your order reference and contact us on WhatsApp if you need a copy.</p>'
-        : '';
-
-    messageEl.innerHTML = ''
-        + '<div class="order-feedback-popup__success" role="status">'
-        + '<div class="order-feedback-popup__success-badge" aria-hidden="true">✓</div>'
-        + '<p class="order-feedback-popup__success-headline">Thank you — we have your order!</p>'
-        + `<p class="order-feedback-popup__msg-primary">${escapeHtml(primary)}</p>`
-        + '<div class="order-feedback-popup__receipt-card">'
-        + '<p class="order-feedback-popup__receipt-hint">'
-        + 'Download and keep your receipt for your records. '
-        + '<strong>Use the link in your receipt to see your order status</strong> — '
-        + 'open the PDF anytime and tap that link for live delivery progress.'
-        + '</p>'
-        + receiptMissingNote
-        + '</div>'
-        + '<p class="order-feedback-popup__success-footer">'
-        + 'Questions about your order? '
-        + `<a class="order-feedback-popup__wa-link" href="${escapeHtml(waUrl)}" target="_blank" rel="noopener noreferrer">Message us on WhatsApp (${escapeHtml(displayPhone)})</a>`
-        + '</p>'
-        + '</div>';
+    messageEl.innerHTML = buildOrderSuccessModalHtml({
+        serverMessage: primary,
+        orderId,
+        orderToken,
+        downloadUrl,
+        waUrl,
+        displayPhone
+    });
+    stripOrderConfirmLegacyTrackUi(messageEl);
 
     configureOrderSuccessPopupActions(downloadUrl);
     popup.classList.remove('hidden');
@@ -2173,6 +3093,7 @@ function showApiResponsePopup(message) {
 
     if (titleEl) {
         titleEl.textContent = 'Order Update';
+        titleEl.classList.remove('visually-hidden');
     }
     popup.querySelector('.order-feedback-popup__panel')?.classList.remove('order-feedback-popup__panel--success');
     restoreOrderFeedbackPopupChrome();
@@ -2180,39 +3101,11 @@ function showApiResponsePopup(message) {
     popup.classList.remove('hidden');
 }
 
-function computeOrderPrices(items, deliveryDetails) {
+function buildOrderWhatsAppText(items, deliveryDetails, context = 'cart', xhr) {
     const safeItems = Array.isArray(items) ? items : [];
-    const orderPrice = safeItems.reduce((sum, item) => {
-        const qty = Math.max(1, Number(item.quantity) || 1);
-        return sum + (Number(item.price) * qty);
-    }, 0);
-    const deliveryPrice = getShippingFee(safeItems, deliveryDetails);
-    return {
-        orderPrice: Number(orderPrice.toFixed(2)),
-        deliveryPrice: Number(deliveryPrice.toFixed(2))
-    };
-}
-
-/**
- * Resolves order subtotal + shipping for POST /api/orders (orderPrice, deliveryPrice).
- * When cart or buy-now summary is visible, uses those amounts so the request matches the UI.
- */
-function resolvePricesForBackend(items, deliveryDetails, priceOverrides = null) {
-    const computed = computeOrderPrices(items, deliveryDetails);
-    if (priceOverrides
-        && Number.isFinite(Number(priceOverrides.orderPrice))
-        && Number.isFinite(Number(priceOverrides.deliveryPrice))) {
-        return {
-            orderPrice: Number(Number(priceOverrides.orderPrice).toFixed(2)),
-            deliveryPrice: Number(Number(priceOverrides.deliveryPrice).toFixed(2))
-        };
-    }
-    return computed;
-}
-
-function buildOrderWhatsAppText(items, deliveryDetails, priceOverrides, xhr) {
-    const safeItems = Array.isArray(items) ? items : [];
-    const prices = resolvePricesForBackend(safeItems, deliveryDetails, priceOverrides);
+    const prices = getPriceOverridesFromStorage(context);
+    const orderPrice = prices?.orderPrice ?? computeOrderSubtotal(safeItems);
+    const deliveryPrice = prices?.deliveryPrice;
     let apiNote = '';
     if (xhr) {
         const msg = xhr.responseJSON?.message || xhr.statusText || '';
@@ -2244,10 +3137,15 @@ function buildOrderWhatsAppText(items, deliveryDetails, priceOverrides, xhr) {
     lines.push(`Other phone: ${d.otherPhoneNumber || '-'}`);
     lines.push('');
     lines.push('*Totals*');
-    lines.push(`Subtotal: Rs. ${prices.orderPrice.toLocaleString()}`);
-    lines.push(`Shipping: Rs. ${prices.deliveryPrice.toLocaleString()}`);
-    const grand = Number((prices.orderPrice + prices.deliveryPrice).toFixed(2));
-    lines.push(`*Total: Rs. ${grand.toLocaleString()}*`);
+    lines.push(`Subtotal: Rs. ${Number(orderPrice).toLocaleString()}`);
+    if (Number.isFinite(Number(deliveryPrice))) {
+        lines.push(`Shipping: Rs. ${Number(deliveryPrice).toLocaleString()}`);
+        const grand = Number((Number(orderPrice) + Number(deliveryPrice)).toFixed(2));
+        lines.push(`*Total: Rs. ${grand.toLocaleString()}*`);
+    } else {
+        lines.push('Shipping: (from server payment summary)');
+        lines.push(`*Subtotal: Rs. ${Number(orderPrice).toLocaleString()}*`);
+    }
     lines.push('');
     lines.push('Please confirm this order. Thank you.');
     let text = lines.join('\n');
@@ -2307,22 +3205,23 @@ function setOrderSubmitLoading(loading, $buttons = null) {
     }
 }
 
-function submitOrderToSpringBoot(items, deliveryDetails = null, priceOverrides = null, submitOptions = null) {
+function submitOrderToSpringBoot(items, deliveryDetails = null, context = 'cart', submitOptions = null) {
     const safeItems = Array.isArray(items) ? items : [];
-    const prices = resolvePricesForBackend(safeItems, deliveryDetails, priceOverrides);
+    const prices = getPriceOverridesFromStorage(context);
+    if (!prices) {
+        return $.Deferred().reject({
+            status: 0,
+            statusText: 'Payment summary not loaded',
+            responseJSON: { message: 'Please view payment summary to load prices before placing your order.' }
+        }).promise();
+    }
     const opts = submitOptions && typeof submitOptions === 'object' ? submitOptions : {};
     const payload = {
         orderSource: 'website',
         placedAt: new Date().toISOString(),
         orderPrice: prices.orderPrice,
         deliveryPrice: prices.deliveryPrice,
-        items: safeItems.map((item) => ({
-            id: Number(item.id),
-            name: item.name,
-            price: Number(item.price),
-            quantity: Math.max(1, Number(item.quantity) || 1),
-            weight: item.weight || ''
-        })),
+        items: safeItems.map((item) => buildOrderItemPayload(item)),
         deliveryDetails: deliveryDetails || null,
         replacePendingOrder: Boolean(opts.replacePendingOrder)
     };
@@ -2368,19 +3267,15 @@ function checkout() {
         return;
     }
 
-    let priceOverrides = null;
-    const $totals = $('#cartTotals');
-    if ($totals.length && $totals.is(':visible')) {
-        const orderFromUi = parseDisplayedRsAmount($('#subtotal').text());
-        const shipFromUi = parseDisplayedRsAmount($('#shipping').text());
-        if (orderFromUi !== null && shipFromUi !== null) {
-            priceOverrides = { orderPrice: orderFromUi, deliveryPrice: shipFromUi };
-        }
+    if (!getPriceOverridesFromStorage('cart')) {
+        showApiResponsePopup('Please view payment summary to load prices before placing your order.');
+        setCartCheckoutStage(CHECKOUT_STAGES.DELIVERY);
+        return;
     }
 
     const $checkoutBtn = $('#checkoutBtn');
     setOrderSubmitLoading(true, $checkoutBtn);
-    submitOrderToSpringBoot(cart, deliveryDetails, priceOverrides)
+    submitOrderToSpringBoot(cart, deliveryDetails, 'cart')
         .done((response) => {
             if (response && response.status === ORDER_STATUS_CONFIRM_PENDING) {
                 showPendingOrderReplaceConfirm(
@@ -2388,12 +3283,12 @@ function checkout() {
                     response.existingOrderId,
                     () => {
                         setOrderSubmitLoading(true, $checkoutBtn);
-                        submitOrderToSpringBoot(cart, deliveryDetails, priceOverrides, { replacePendingOrder: true })
+                        submitOrderToSpringBoot(cart, deliveryDetails, 'cart', { replacePendingOrder: true })
                             .done((r2) => {
                                 handleSuccessfulOrderSubmit(r2, { mode: 'cart' });
                             })
                             .fail((xhr) => {
-                                handleOrderSubmitFailure(xhr, cart, deliveryDetails, priceOverrides);
+                                handleOrderSubmitFailure(xhr, cart, deliveryDetails, 'cart');
                             })
                             .always(() => {
                                 setOrderSubmitLoading(false, $checkoutBtn);
@@ -2411,7 +3306,7 @@ function checkout() {
             handleSuccessfulOrderSubmit(response, { mode: 'cart' });
         })
         .fail((xhr) => {
-            handleOrderSubmitFailure(xhr, cart, deliveryDetails, priceOverrides);
+            handleOrderSubmitFailure(xhr, cart, deliveryDetails, 'cart');
         })
         .always(() => {
             setOrderSubmitLoading(false, $checkoutBtn);
@@ -2421,6 +3316,90 @@ function checkout() {
             } else {
                 $('#checkoutBtn').prop('disabled', true);
             }
+        });
+}
+
+function submitBuyNowOrder() {
+    const popup = document.getElementById('buyNowDeliveryPopup');
+    if (!popup) return;
+
+    const productId = Number(popup.dataset.productId);
+    const product = products.find((p) => Number(p.id) === productId);
+    if (!product) {
+        closeBuyNowPopup();
+        return;
+    }
+
+    const deliveryDetails = getBuyNowDeliveryDetails();
+    const phoneValidation = setPhoneValidationUI(
+        {
+            whatsAppSelector: '#buyNowWhatsAppNumber',
+            otherSelector: '#buyNowOtherPhoneNumber',
+            errorSelector: '#buyNowPhoneError'
+        },
+        deliveryDetails,
+        true
+    );
+    if (!isCartOrderSummaryUnlocked(deliveryDetails)) {
+        if (!hasDeliveryDetails(deliveryDetails)) {
+            showApiResponsePopup('Please enter your full name (at least 2 characters), delivery details, WhatsApp number, other phone number, and district.');
+        } else {
+            showApiResponsePopup(phoneValidation.message || `Please enter valid, different WhatsApp and other phone numbers (exactly ${ORDER_PHONE_DIGIT_LENGTH} digits each).`);
+        }
+        if (!hasValidCustomerName(deliveryDetails)) {
+            scrollBuyNowPanelToward('#buyNowDeliveryForm .cart-form-group--customer-name');
+        } else {
+            scheduleScrollBuyNowToPhoneFieldsIfNeeded();
+        }
+        setBuyNowCheckoutStage(CHECKOUT_STAGES.DELIVERY);
+        return;
+    }
+
+    const buyNowItem = getBuyNowItemFromPopup();
+    if (!buyNowItem) {
+        closeBuyNowPopup();
+        return;
+    }
+
+    if (!getPriceOverridesFromStorage('buyNow')) {
+        showApiResponsePopup('Please view payment summary to load prices before placing your order.');
+        setBuyNowCheckoutStage(CHECKOUT_STAGES.DELIVERY);
+        return;
+    }
+
+    const $submitButton = $('#buyNowCheckoutBtn');
+    setOrderSubmitLoading(true, $submitButton);
+    submitOrderToSpringBoot([buyNowItem], deliveryDetails, 'buyNow')
+        .done((response) => {
+            if (response && response.status === ORDER_STATUS_CONFIRM_PENDING) {
+                showPendingOrderReplaceConfirm(
+                    response.message,
+                    response.existingOrderId,
+                    () => {
+                        setOrderSubmitLoading(true, $submitButton);
+                        submitOrderToSpringBoot([buyNowItem], deliveryDetails, 'buyNow', { replacePendingOrder: true })
+                            .done((r2) => {
+                                handleSuccessfulOrderSubmit(r2, { mode: 'buyNow' });
+                            })
+                            .fail((xhr) => {
+                                handleOrderSubmitFailure(xhr, [buyNowItem], deliveryDetails, 'buyNow');
+                            })
+                            .always(() => {
+                                setOrderSubmitLoading(false, $submitButton);
+                                updateBuyNowSubmitButtonState();
+                            });
+                    }
+                );
+                return;
+            }
+            handleSuccessfulOrderSubmit(response, { mode: 'buyNow' });
+        })
+        .fail((xhr) => {
+            handleOrderSubmitFailure(xhr, [buyNowItem], deliveryDetails, 'buyNow');
+        })
+        .always(() => {
+            setOrderSubmitLoading(false, $submitButton);
+            updateBuyNowSubmitButtonState();
         });
 }
 
@@ -2454,19 +3433,19 @@ $(document).ready(function() {
 
     $(document).off('click', '#cartToggle').on('click', '#cartToggle', function() {
         console.log('Cart icon clicked');
+        resetCartCheckoutFlow();
         renderCart();
         $('#cartSidepanel').addClass('active');
         $('#cartOverlay').addClass('active');
     });
 
-    $(document).off('click', '#cartClose').on('click', '#cartClose', function() {
-        $('#cartSidepanel').removeClass('active');
-        $('#cartOverlay').removeClass('active');
+    $(document).off('click', '#cartClose').on('click', '#cartClose', function(event) {
+        event.preventDefault();
+        closeCartPanel();
     });
 
     $(document).off('click', '#cartOverlay').on('click', '#cartOverlay', function() {
-        $('#cartSidepanel').removeClass('active');
-        $('#cartOverlay').removeClass('active');
+        closeCartPanel();
     });
 
     $(document).off('click', '.quantity-btn').on('click', '.quantity-btn', function() {
@@ -2484,6 +3463,52 @@ $(document).ready(function() {
         checkout();
     });
 
+    $(document).off('click', '#cartEnterDeliveryBtn').on('click', '#cartEnterDeliveryBtn', function() {
+        setCartCheckoutStage(CHECKOUT_STAGES.DELIVERY);
+        document.getElementById('deliveryCustomerName')?.focus();
+    });
+
+    $(document).off('click', '#cartBackToItems').on('click', '#cartBackToItems', function() {
+        setCartCheckoutStage(CHECKOUT_STAGES.ITEMS);
+    });
+
+    $(document).off('click', '#cartBackToDelivery').on('click', '#cartBackToDelivery', function() {
+        clearPaymentSummaryCache('cart');
+        setCartCheckoutStage(CHECKOUT_STAGES.DELIVERY);
+    });
+
+    $(document).off('click', '#cartViewPaymentSummaryBtn').on('click', '#cartViewPaymentSummaryBtn', async function() {
+        if (this.disabled || paymentSummaryLoading) return;
+        if (!validateCartDeliveryForSummary()) return;
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        const deliveryDetails = getDeliveryDetails();
+        await loadPaymentSummaryAndShow({
+            items: cart,
+            deliveryDetails,
+            panelId: 'cartPaymentSummary',
+            setStageFn: setCartCheckoutStage,
+            context: 'cart',
+            scrollTargetId: 'cartPaymentScroll'
+        });
+    });
+
+    $(document).off('click', '#cartPaymentCancel').on('click', '#cartPaymentCancel', function() {
+        closeCartPanel();
+    });
+
+    $(document).off('change', '.delivery-type-checkbox').on('change', '.delivery-type-checkbox', function() {
+        const targetSelector = this.dataset.deliveryTypeTarget;
+        if (!targetSelector) return;
+        const $target = $(targetSelector);
+        const $group = $(`.delivery-type-checkbox[data-delivery-type-target="${targetSelector}"]`);
+        if (this.checked) {
+            $group.not(this).prop('checked', false);
+            $target.val(this.value).trigger('change');
+        } else {
+            $target.val('').trigger('change');
+        }
+    });
+
     // Keep phone fields numeric-only for clean validation and payload.
     $(document).off('input', '#deliveryWhatsAppNumber, #deliveryOtherPhoneNumber, #buyNowWhatsAppNumber, #buyNowOtherPhoneNumber')
         .on('input', '#deliveryWhatsAppNumber, #deliveryOtherPhoneNumber, #buyNowWhatsAppNumber, #buyNowOtherPhoneNumber', function() {
@@ -2496,6 +3521,7 @@ $(document).ready(function() {
             const cart = JSON.parse(localStorage.getItem('cart')) || [];
             if (!cart.length) return;
             const currentDetails = getDeliveryDetails();
+            clearPaymentSummaryCache('cart');
             setPhoneValidationUI(
                 {
                     whatsAppSelector: '#deliveryWhatsAppNumber',
@@ -2517,107 +3543,55 @@ $(document).ready(function() {
         openBuyNowPopup(product);
     });
 
-    $(document).off('click', '#buyNowPopupClose, #buyNowPopupCancel, #buyNowPopupBackdrop')
-        .on('click', '#buyNowPopupClose, #buyNowPopupCancel, #buyNowPopupBackdrop', function() {
+    $(document).off('click', '#buyNowPopupClose, #buyNowPaymentCancel, #buyNowPopupBackdrop')
+        .on('click', '#buyNowPopupClose, #buyNowPaymentCancel, #buyNowPopupBackdrop', function() {
             closeBuyNowPopup();
         });
 
+    $(document).off('click', '#buyNowEnterDeliveryBtn').on('click', '#buyNowEnterDeliveryBtn', function() {
+        setBuyNowCheckoutStage(CHECKOUT_STAGES.DELIVERY);
+        document.getElementById('buyNowCustomerName')?.focus();
+    });
+
+    $(document).off('click', '#buyNowBackToProduct').on('click', '#buyNowBackToProduct', function() {
+        setBuyNowCheckoutStage(CHECKOUT_STAGES.ITEMS);
+        renderBuyNowProductStage();
+    });
+
+    $(document).off('click', '#buyNowBackToDelivery').on('click', '#buyNowBackToDelivery', function() {
+        clearPaymentSummaryCache('buyNow');
+        setBuyNowCheckoutStage(CHECKOUT_STAGES.DELIVERY);
+        refreshBuyNowSummaryState();
+    });
+
+    $(document).off('click', '#buyNowViewPaymentSummaryBtn').on('click', '#buyNowViewPaymentSummaryBtn', async function() {
+        if (this.disabled || paymentSummaryLoading) return;
+        if (!validateBuyNowDeliveryForSummary()) return;
+        const item = getBuyNowItemFromPopup();
+        if (!item) return;
+        const deliveryDetails = getBuyNowDeliveryDetails();
+        await loadPaymentSummaryAndShow({
+            items: [item],
+            deliveryDetails,
+            panelId: 'buyNowPaymentSummary',
+            setStageFn: setBuyNowCheckoutStage,
+            context: 'buyNow',
+            scrollTargetId: 'buyNowPaymentScroll'
+        });
+    });
+
     $(document).off('submit', '#buyNowDeliveryForm').on('submit', '#buyNowDeliveryForm', function(event) {
         event.preventDefault();
-        const $submitButton = $(this).find('button[type="submit"]');
+    });
 
-        const popup = document.getElementById('buyNowDeliveryPopup');
-        if (!popup) {
-            return;
-        }
-
-        const productId = Number(popup.dataset.productId);
-        const product = products.find((p) => Number(p.id) === productId);
-        if (!product) {
-            closeBuyNowPopup();
-            return;
-        }
-
-        const deliveryDetails = getBuyNowDeliveryDetails();
-        const phoneValidation = setPhoneValidationUI(
-            {
-                whatsAppSelector: '#buyNowWhatsAppNumber',
-                otherSelector: '#buyNowOtherPhoneNumber',
-                errorSelector: '#buyNowPhoneError'
-            },
-            deliveryDetails,
-            true
-        );
-        if (!isCartOrderSummaryUnlocked(deliveryDetails)) {
-            if (!hasDeliveryDetails(deliveryDetails)) {
-                showApiResponsePopup('Please enter your full name (at least 2 characters), delivery details, WhatsApp number, other phone number, and district.');
-            } else {
-                showApiResponsePopup(phoneValidation.message || `Please enter valid, different WhatsApp and other phone numbers (exactly ${ORDER_PHONE_DIGIT_LENGTH} digits each).`);
-            }
-            if (!hasValidCustomerName(deliveryDetails)) {
-                scrollBuyNowPanelToward('#buyNowDeliveryForm .buy-now-popup__group--customer-name');
-            } else {
-                scheduleScrollBuyNowToPhoneFieldsIfNeeded();
-            }
-            return;
-        }
-
-        const buyNowItem = {
-            id: product.id,
-            name: product.name,
-            price: Number(product.price),
-            weight: product.weight || '',
-            quantity: 1
-        };
-
-        let buyNowPriceOverrides = null;
-        const $buySummary = $('#buyNowPriceSummary');
-        if ($buySummary.length && !$buySummary.hasClass('hidden')) {
-            const orderFromUi = parseDisplayedRsAmount($('#buyNowSubtotal').text());
-            const shipFromUi = parseDisplayedRsAmount($('#buyNowShipping').text());
-            if (orderFromUi !== null && shipFromUi !== null) {
-                buyNowPriceOverrides = { orderPrice: orderFromUi, deliveryPrice: shipFromUi };
-            }
-        }
-
-        setOrderSubmitLoading(true, $submitButton);
-        submitOrderToSpringBoot([buyNowItem], deliveryDetails, buyNowPriceOverrides)
-            .done((response) => {
-                if (response && response.status === ORDER_STATUS_CONFIRM_PENDING) {
-                    showPendingOrderReplaceConfirm(
-                        response.message,
-                        response.existingOrderId,
-                        () => {
-                            setOrderSubmitLoading(true, $submitButton);
-                            submitOrderToSpringBoot([buyNowItem], deliveryDetails, buyNowPriceOverrides, { replacePendingOrder: true })
-                                .done((r2) => {
-                                    handleSuccessfulOrderSubmit(r2, { mode: 'buyNow' });
-                                })
-                                .fail((xhr) => {
-                                    handleOrderSubmitFailure(xhr, [buyNowItem], deliveryDetails, buyNowPriceOverrides);
-                                })
-                                .always(() => {
-                                    setOrderSubmitLoading(false, $submitButton);
-                                    updateBuyNowSubmitButtonState();
-                                });
-                        }
-                    );
-                    return;
-                }
-                handleSuccessfulOrderSubmit(response, { mode: 'buyNow' });
-            })
-            .fail((xhr) => {
-                handleOrderSubmitFailure(xhr, [buyNowItem], deliveryDetails, buyNowPriceOverrides);
-            })
-            .always(() => {
-                setOrderSubmitLoading(false, $submitButton);
-                updateBuyNowSubmitButtonState();
-            });
+    $(document).off('click', '#buyNowCheckoutBtn').on('click', '#buyNowCheckoutBtn', function() {
+        submitBuyNowOrder();
     });
 
     $(document).off('input change', '#buyNowDeliveryType, #buyNowCustomerName, #buyNowAddress1, #buyNowAddress2, #buyNowWhatsAppNumber, #buyNowOtherPhoneNumber, #buyNowDistrict')
         .on('input change', '#buyNowDeliveryType, #buyNowCustomerName, #buyNowAddress1, #buyNowAddress2, #buyNowWhatsAppNumber, #buyNowOtherPhoneNumber, #buyNowDistrict', function() {
             const currentDetails = getBuyNowDeliveryDetails();
+            clearPaymentSummaryCache('buyNow');
             setPhoneValidationUI(
                 {
                     whatsAppSelector: '#buyNowWhatsAppNumber',
@@ -2626,7 +3600,7 @@ $(document).ready(function() {
                 },
                 currentDetails
             );
-            renderBuyNowPricePreview();
+            refreshBuyNowSummaryState();
             scheduleScrollBuyNowToPhoneFieldsIfNeeded();
         });
 
@@ -2634,6 +3608,19 @@ $(document).ready(function() {
         if (event.key === 'Escape') {
             closeBuyNowPopup();
         }
+    });
+
+    $(document).off('click', '.order-confirm-modal__copy-btn').on('click', '.order-confirm-modal__copy-btn', async function() {
+        const text = this.dataset.copyText || '';
+        const btn = this;
+        const prev = btn.textContent;
+        btn.disabled = true;
+        const ok = await copyTextToClipboard(text);
+        btn.textContent = ok ? 'Copied!' : 'Copy failed';
+        setTimeout(() => {
+            btn.textContent = prev;
+            btn.disabled = false;
+        }, 1800);
     });
 
     $(document).off('click', '#orderFeedbackClose, #orderFeedbackOk, #orderFeedbackBackdrop')
@@ -2653,7 +3640,7 @@ $(document).ready(function() {
         const btn = this;
         const prevHtml = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = 'Downloading…';
+        btn.innerHTML = '<svg class="order-confirm-modal__download-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg> Downloading…';
 
         triggerOrderReceiptDownload(url).finally(() => {
             closeOrderFeedbackPopup();

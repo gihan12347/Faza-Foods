@@ -1,7 +1,7 @@
 // include.js
 window.headerReady = (async function () {
     console.log('Loading header component...');
-    const res = await fetch('/component/header.html');
+    const res = await fetch('/component/header.html?v=10');
     const html = await res.text();
     document.getElementById('header').innerHTML = html;
 })();

@@ -2,9 +2,17 @@
     <div class="container header-container">
         <div class="header-content">
             <div class="logo">
-                <a href="/"><img src="/public/images/fasa-logo.jpeg" alt="Fasa Products"></a>
+                <a href="/" class="logo-link" aria-label="Fasa Products home">
+                    <span class="logo-mark">
+                        <img src="/public/images/fasa-logo.jpeg" alt="">
+                    </span>
+                    <span class="logo-brand">
+                        <span class="logo-brand__name">Fasa Products</span>
+                        <span class="logo-brand__tagline">Remembering Tradition</span>
+                    </span>
+                </a>
             </div>
-            <nav class="nav" id="nav">
+            <nav class="nav" id="nav" aria-label="Main navigation">
                 <ul class="nav-list">
                     <li><a href="/" id="nav-home">Home</a></li>
                     <li><a href="#products" id="nav-products">Products</a></li>
@@ -15,17 +23,16 @@
                 </ul>
             </nav>
             <div class="header-actions">
-                <!-- Cart Icon -->
-                <div class="cart-icon-wrapper" id="cartToggle" aria-label="Shopping Cart">
+                <button type="button" class="cart-icon-wrapper" id="cartToggle" aria-label="Open shopping cart">
                     <img src="/public/images/cart.png" alt="" class="cart-icon" aria-hidden="true">
-                    <span class="cart-badge cart-count">0</span>
-                </div>
-
-                <!-- Mobile Menu Toggle -->
-                <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
+                    <span class="cart-badge cart-count" aria-live="polite">0</span>
+                </button>
+                <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Open menu" aria-controls="nav" aria-expanded="false">
+                    <span class="mobile-menu-toggle__bars" aria-hidden="true">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
                 </button>
             </div>
         </div>
@@ -73,7 +80,6 @@
             </span>
             <div class="cart-header-titles">
                 <h2>Shopping Cart</h2>
-                <span class="cart-count" id="cartCount">0</span>
             </div>
         </div>
         <button type="button" class="close-btn" id="cartClose" aria-label="Close shopping cart">
@@ -83,17 +89,29 @@
             </svg>
         </button>
     </div>
-    <div id="cartItems"></div>
+    <div class="cart-checkout-body" id="cartSummary" style="display: none;">
+        <div class="checkout-steps" id="cartCheckoutSteps" aria-label="Checkout progress">
+            <span class="checkout-steps__item" data-step="items">Cart</span>
+            <span class="checkout-steps__item" data-step="delivery">Delivery</span>
+            <span class="checkout-steps__item" data-step="payment">Payment</span>
+        </div>
 
-    <div class="cart-summary" id="cartSummary" style="display: none;">
-        <div class="cart-delivery-form" id="cartDeliveryForm">
-            <label class="cart-form-group cart-form-group--delivery-type">
-                <span>Delivery Type</span>
-                <select id="deliveryType" required>                
-                    <option value="Courier">Courier</option>
-                    <option value="Cash on delivery">Cash on delivery</option>
-                </select>
-            </label>
+        <div class="cart-stage-view" id="cartStageItems">
+            <div class="cart-stage-view__scroll" id="cartItemsScroll">
+                <div id="cartItems"></div>
+            </div>
+            <div class="cart-stage-view__footer" id="cartStageItemsFooter">
+                <button type="button" class="checkout-btn checkout-btn--primary" id="cartEnterDeliveryBtn">Enter delivery details</button>
+            </div>
+        </div>
+
+        <div class="cart-stage-view hidden" id="cartStageDelivery">
+            <div class="cart-stage-view__scroll" id="cartDeliveryScroll">
+                <button type="button" class="checkout-stage-back" id="cartBackToItems" aria-label="Back to cart items">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                    Back to cart
+                </button>
+                <div class="cart-delivery-form" id="cartDeliveryForm">
             <label class="cart-form-group cart-form-group--customer-name">
                 <span>Full name</span>
                 <input type="text" id="deliveryCustomerName" name="customerName" autocomplete="name" inputmode="text" placeholder="Your full name" required maxlength="120">
@@ -106,6 +124,7 @@
                 <span>Address Line 2 <span class="field-optional">(optional)</span></span>
                 <input type="text" id="deliveryAddress2" placeholder="Area / city">
             </label>
+            <div class="checkout-form-row checkout-form-row--phones">
             <label class="cart-form-group cart-form-group--whatsapp">
                 <span>WhatsApp Number</span>
                 <input type="tel" id="deliveryWhatsAppNumber" inputmode="numeric" maxlength="10" autocomplete="tel" placeholder="0771234567" required>
@@ -114,7 +133,23 @@
                 <span>Other Phone Number</span>
                 <input type="tel" id="deliveryOtherPhoneNumber" inputmode="numeric" maxlength="10" autocomplete="tel" placeholder="0712345678" required>
             </label>
+            </div>
             <p class="cart-phone-error hidden" id="deliveryPhoneError" role="alert" aria-live="polite"></p>
+            <div class="checkout-form-row checkout-form-row--type-district">
+            <div class="cart-form-group cart-form-group--delivery-type">
+                <span id="deliveryTypeLabel">Delivery Type</span>
+                <input type="hidden" id="deliveryType" value="">
+                <div class="delivery-type-options" role="group" aria-labelledby="deliveryTypeLabel">
+                    <label class="delivery-type-option">
+                        <input type="checkbox" class="delivery-type-checkbox" value="Courier" data-delivery-type-target="#deliveryType">
+                        <span class="delivery-type-option__text">Courier</span>
+                    </label>
+                    <label class="delivery-type-option">
+                        <input type="checkbox" class="delivery-type-checkbox" value="Cash on delivery" data-delivery-type-target="#deliveryType">
+                        <span class="delivery-type-option__text">Cash on delivery</span>
+                    </label>
+                </div>
+            </div>
             <label class="cart-form-group cart-form-group--district">
                 <span>District</span>
                 <select id="deliveryDistrict" required>
@@ -145,23 +180,33 @@
                     <option value="Vavuniya">Vavuniya</option>
                 </select>
             </label>
+            </div>
+            </div>
+            </div>
+            <div class="cart-stage-view__footer">
+                <button type="button" class="checkout-btn checkout-btn--secondary" id="cartViewPaymentSummaryBtn" disabled aria-label="View payment summary">
+                    View payment summary
+                </button>
+            </div>
         </div>
-        <div id="cartTotals" style="display: none;">
-            <div class="summary-row">
-                <span>Subtotal</span>
-                <span id="subtotal">Rs. 0</span>
+
+        <div class="cart-stage-view hidden" id="cartStagePayment">
+            <div class="cart-stage-view__scroll" id="cartPaymentScroll">
+                <button type="button" class="checkout-stage-back" id="cartBackToDelivery" aria-label="Back to delivery details">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                    Back to delivery
+                </button>
+                <div class="checkout-payment-summary" id="cartPaymentSummary" aria-live="polite"></div>
+                <div class="price-preview-data visually-hidden" aria-hidden="true">
+                    <span id="subtotal">Rs. 0</span>
+                    <span id="shipping">Rs. 0</span>
+                    <span id="total">Rs. 0</span>
+                </div>
             </div>
-            <div class="summary-row">
-                <span>Shipping</span>
-                <span id="shipping">Rs. 0</span>
+            <div class="cart-stage-view__footer checkout-stage-actions">
+                <button type="button" class="checkout-stage-btn checkout-stage-btn--cancel" id="cartPaymentCancel">Cancel</button>
+                <button type="button" class="checkout-btn checkout-btn--primary" id="checkoutBtn">Buy now</button>
             </div>
-            <div class="summary-row">
-                <span>Total</span>
-                <span id="total">Rs. 0</span>
-            </div>
-            <button type="button" class="checkout-btn" id="checkoutBtn" disabled aria-label="Send cart order to backend">
-                Order Now
-            </button>
         </div>
     </div>
 </div>
