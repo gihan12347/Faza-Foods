@@ -14,9 +14,9 @@ const CART_LOADING_ICON_SRC = '/public/images/cart.png';
 const PRODUCTS_LOADING_TITLE = 'Preparing your catalog';
 const PRODUCTS_LOADING_MESSAGE = 'Fetching products from our store…';
 const ORDER_FAIL_WHATSAPP_USER_MESSAGE = 'We could not submit your order online. WhatsApp should open with your order details — please send that message to Fasa Products to confirm your order. If WhatsApp did not open, check your popup blocker or contact us from the site footer.';
-/** Spring order API: same customer already has a pending order; show replace confirmation. */
-const ORDER_STATUS_CONFIRM_PENDING = 'CONFIRM_PENDING_ORDER';
-const ORDER_STATUS_UPDATE_PENDING_FAILED = 'UPDATE_PENDING_FAILED';
+/** POST /api/orders — OrderResponse.status values from fasa-orders-api. */
+const ORDER_STATUS_SUCCESS = 'SUCCESS';
+const ORDER_STATUS_VALIDATION_ERROR = 'FAIL';
 
 let pendingOrderReplaceAcceptHandler = null;
 let trackOrderPageInitialized = false;
@@ -131,7 +131,7 @@ function showProductsCatalogLoadError() {
         return;
     }
 
-    ['bestSellersGrid', 'offersGrid', 'productsGrid', 'outOfStockGrid'].forEach((id) => {
+    ['freeDeliveryGrid', 'offersGrid', 'productsGrid', 'outOfStockGrid'].forEach((id) => {
         const el = document.getElementById(id);
         if (el) {
             el.innerHTML = message;
@@ -224,10 +224,7 @@ function buildOrderItemPayload(item) {
     return {
         id: Number(item.id),
         name: item.name,
-        price: Number(item.price),
-        quantity: Math.max(1, Number(item.quantity) || 1),
-        weight: item.weight || '',
-        isDeliveryFree: resolveIsDeliveryFreeForItem(item)
+        quantity: Math.max(1, Number(item.quantity) || 1)
     };
 }
 
@@ -263,7 +260,7 @@ function buildPricePreviewPayload(items, deliveryDetails, priceSummary, meta = {
     const safeItems = Array.isArray(items) ? items : [];
     const summary = normalizeStoredPaymentSummary(priceSummary);
     if (!summary) {
-        throw new Error('Payment summary from /cart/summary is required for price preview');
+        throw new Error('Payment summary from /cart-summary is required for price preview');
     }
     const lineItems = safeItems.map((item) => {
         const qty = Math.max(1, Number(item.quantity) || 1);
@@ -577,7 +574,7 @@ function getCartSummaryApiUrl() {
         return String(window.FASA_CART_SUMMARY_API_URL).trim();
     }
     const base = String(SPRING_BOOT_ORDER_API_URL || '').replace(/\/+$/, '');
-    return `${base}/cart/summary`;
+    return `${base}/cart-summary`;
 }
 
 function buildCartSummaryRequestPayload(items, deliveryDetails) {
@@ -586,6 +583,50 @@ function buildCartSummaryRequestPayload(items, deliveryDetails) {
         items: safeItems.map((item) => buildOrderItemPayload(item)),
         deliveryDetails: deliveryDetails || null
     };
+}
+
+function resolveCartSummaryErrorMessage(err) {
+    const body = extractOrderResponseBody(err);
+    if (body && typeof body === 'object') {
+        if (body.message) {
+            return String(body.message);
+        }
+        const fieldErrors = body.validationErrors && typeof body.validationErrors === 'object'
+            ? body.validationErrors
+            : null;
+        if (fieldErrors && Object.keys(fieldErrors).length) {
+            return Object.entries(fieldErrors)
+                .map(([field, msg]) => `${field}: ${msg}`)
+                .join('\n');
+        }
+        if (body.subtotal == null && body.status == null) {
+            const entries = Object.entries(body).filter(([, v]) => typeof v === 'string');
+            if (entries.length) {
+                return entries.map(([field, msg]) => `${field}: ${msg}`).join('\n');
+            }
+        }
+    }
+    if (err && err.status === 404) {
+        return 'Payment summary endpoint not found. Expected POST /api/orders/cart-summary.';
+    }
+    return 'Could not load payment summary from the server. Please check your connection and try again.';
+}
+
+function showCartSummaryFailure(err) {
+    const body = extractOrderResponseBody(err);
+    if (body && typeof body === 'object') {
+        const validationErrors = body.validationErrors && typeof body.validationErrors === 'object'
+            ? body.validationErrors
+            : (body.subtotal == null && body.status == null ? body : null);
+        if (validationErrors && Object.keys(validationErrors).length) {
+            showOrderValidationPopup({
+                message: 'Could not calculate payment summary.',
+                validationErrors
+            });
+            return;
+        }
+    }
+    showApiResponsePopup(resolveCartSummaryErrorMessage(err));
 }
 
 function parseCartSummaryResponse(response) {
@@ -753,7 +794,7 @@ async function loadPaymentSummaryAndShow(config) {
         console.error('Cart summary request failed:', err);
         clearPaymentSummaryCache(context);
         setStageFn(CHECKOUT_STAGES.DELIVERY);
-        showApiResponsePopup('Could not load payment summary from the server. Please check your connection and try again.');
+        showCartSummaryFailure(err);
         return false;
     } finally {
         paymentSummaryLoading = false;
@@ -1449,6 +1490,94 @@ function initSmoothScrolling() {
     });
 }
 
+function initHeroSlideshow() {
+    const root = document.querySelector('.hero-slideshow');
+    if (!root) return;
+
+    const slides = Array.from(root.querySelectorAll('.hero-slide'));
+    const dots = Array.from(root.querySelectorAll('.hero-slideshow__dot'));
+    const prevBtn = root.querySelector('.hero-slideshow__nav--prev');
+    const nextBtn = root.querySelector('.hero-slideshow__nav--next');
+    const cta = document.getElementById('heroSlideCta');
+    if (slides.length < 2) return;
+
+    const slideMeta = [
+        { href: '/product?id=11', label: 'Discover Hair Oil' },
+        { href: '/product?id=32', label: 'Discover Sandalwood Comb' }
+    ];
+
+    let index = Math.max(0, slides.findIndex((s) => s.classList.contains('is-active')));
+    let timer = null;
+    const AUTO_MS = 5500;
+
+    function goTo(nextIndex) {
+        index = (nextIndex + slides.length) % slides.length;
+        slides.forEach((slide, i) => {
+            const active = i === index;
+            slide.classList.toggle('is-active', active);
+            slide.setAttribute('aria-hidden', active ? 'false' : 'true');
+        });
+        dots.forEach((dot, i) => {
+            const active = i === index;
+            dot.classList.toggle('is-active', active);
+            dot.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        const meta = slideMeta[index];
+        if (cta && meta) {
+            cta.href = meta.href;
+            cta.textContent = meta.label;
+        }
+    }
+
+    function next() {
+        goTo(index + 1);
+    }
+
+    function prev() {
+        goTo(index - 1);
+    }
+
+    function stopAuto() {
+        if (timer) {
+            window.clearInterval(timer);
+            timer = null;
+        }
+    }
+
+    function startAuto() {
+        stopAuto();
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        timer = window.setInterval(next, AUTO_MS);
+    }
+
+    prevBtn?.addEventListener('click', () => {
+        prev();
+        startAuto();
+    });
+    nextBtn?.addEventListener('click', () => {
+        next();
+        startAuto();
+    });
+    dots.forEach((dot) => {
+        dot.addEventListener('click', () => {
+            const to = Number(dot.dataset.slideTo);
+            if (!Number.isFinite(to)) return;
+            goTo(to);
+            startAuto();
+        });
+    });
+
+    root.addEventListener('mouseenter', stopAuto);
+    root.addEventListener('mouseleave', startAuto);
+    root.addEventListener('focusin', stopAuto);
+    root.addEventListener('focusout', (e) => {
+        if (!root.contains(e.relatedTarget)) startAuto();
+    });
+
+    goTo(index);
+    startAuto();
+}
+
 function initScrollToTopButton() {
     const scrollButton = document.getElementById('scrollToTopBtn');
     if (!scrollButton) return;
@@ -1481,9 +1610,6 @@ function isProductDetailsPage() {
     return path === '/product' || path.endsWith('/product') || path.endsWith('/product.html');
 }
 
-// ============================================
-// Initialize Page
-// ============================================
 async function init() {
     if (document.body.classList.contains('track-order-page')) {
         initMobileMenu();
@@ -1516,11 +1642,17 @@ async function init() {
         }
 
         const inStock = getInStockProducts();
-        const bestSellers = inStock.filter(p => p.isBestSeller);
+        const freeDeliveryProducts = inStock.filter(p => normalizeIsDeliveryFree(p.isDeliveryFree));
         const offers = inStock.filter(p => p.originalPrice > p.price);
 
-        if (bestSellers.length) {
-            renderProducts(bestSellers, 'bestSellersGrid');
+        if (freeDeliveryProducts.length) {
+            renderProducts(freeDeliveryProducts, 'freeDeliveryGrid');
+        } else {
+            const freeDeliveryEl = document.getElementById('free-delivery');
+            if (freeDeliveryEl) {
+                freeDeliveryEl.style.display = 'none';
+            }
+            document.querySelector('a[href="#free-delivery"]')?.closest('li')?.remove();
         }
         if (offers.length) {
             renderProducts(offers, 'offersGrid');
@@ -2140,12 +2272,55 @@ function showPendingOrderReplaceConfirm(message, existingOrderId, onAccept) {
     replaceBtn?.focus();
 }
 
+function extractOrderResponseBody(xhrOrResponse) {
+    const data = xhrOrResponse && xhrOrResponse.responseJSON != null
+        ? xhrOrResponse.responseJSON
+        : xhrOrResponse;
+    return data && typeof data === 'object' ? data : null;
+}
+
+function isOrderValidationError(xhrOrResponse) {
+    const body = extractOrderResponseBody(xhrOrResponse);
+    return body && body.status === ORDER_STATUS_VALIDATION_ERROR;
+}
+
+function buildValidationErrorsHtml(validationErrors, fallbackMessage) {
+    if (!validationErrors || typeof validationErrors !== 'object' || !Object.keys(validationErrors).length) {
+        return escapeHtml(fallbackMessage || 'Validation failed');
+    }
+    const items = Object.entries(validationErrors)
+        .map(([field, msg]) => `<li><strong>${escapeHtml(field)}</strong>: ${escapeHtml(String(msg || ''))}</li>`)
+        .join('');
+    return `<p class="mb-2">${escapeHtml(fallbackMessage || 'Please fix the following:')}</p><ul class="order-validation-errors mb-0">${items}</ul>`;
+}
+
+function showOrderValidationPopup(response) {
+    ensureOrderFeedbackPopup();
+    const popup = document.getElementById('orderFeedbackPopup');
+    const messageEl = document.getElementById('orderFeedbackMessage');
+    const titleEl = document.getElementById('orderFeedbackTitle');
+    if (!popup || !messageEl) return;
+
+    if (titleEl) {
+        titleEl.textContent = 'Could not submit order';
+        titleEl.classList.remove('visually-hidden');
+    }
+    popup.querySelector('.order-feedback-popup__panel')?.classList.remove('order-feedback-popup__panel--success');
+    restoreOrderFeedbackPopupChrome();
+    messageEl.innerHTML = buildValidationErrorsHtml(response?.validationErrors, response?.message);
+    popup.classList.remove('hidden');
+}
+
 function handleSuccessfulOrderSubmit(response, context) {
-    if (response && response.status === ORDER_STATUS_UPDATE_PENDING_FAILED) {
-        showApiResponsePopup(response.message || 'We could not update your previous order. Please try again.');
+    if (!response || response.status !== ORDER_STATUS_SUCCESS) {
+        if (isOrderValidationError(response)) {
+            showOrderValidationPopup(response);
+        } else {
+            showApiResponsePopup(response?.message || 'Unexpected response from order server.');
+        }
         return;
     }
-    const serverMessage = response?.message || 'Order submitted successfully.';
+    const serverMessage = response.message || 'Order submitted successfully.';
     showOrderSuccessPopup(serverMessage, response);
     if (context.mode === 'cart') {
         clearPaymentSummaryCache('cart');
@@ -2160,6 +2335,10 @@ function handleSuccessfulOrderSubmit(response, context) {
 }
 
 function handleOrderSubmitFailure(xhr, items, deliveryDetails, context = 'cart') {
+    if (isOrderValidationError(xhr)) {
+        showOrderValidationPopup(extractOrderResponseBody(xhr));
+        return;
+    }
     const waText = buildOrderWhatsAppText(items, deliveryDetails, context, xhr);
     openWhatsAppOrderFallback(waText);
     showApiResponsePopup(ORDER_FAIL_WHATSAPP_USER_MESSAGE);
@@ -2526,10 +2705,30 @@ function resolveOrderTrackFetchErrorMessage(err) {
 
 /** Pipeline stages shown on the track-order page (matches backend OrderStatus, excluding REJECT). */
 const ORDER_PROGRESS_STAGES = [
-    { key: 'PENDING', title: 'Order received', hint: 'We have your order.' },
-    { key: 'PROCESSING', title: 'Processing', hint: 'Preparing your items.' },
-    { key: 'DELIVERED', title: 'Out for delivery', hint: 'On the way to you.' },
-    { key: 'DONE', title: 'Completed', hint: 'Delivered and closed.' }
+    {
+        key: 'PENDING',
+        title: 'Pending',
+        hint: 'Order received',
+        icon: '/public/images/order-stage-pending-icon.png'
+    },
+    {
+        key: 'PROCESSING',
+        title: 'Processing',
+        hint: 'In warehouse',
+        icon: '/public/images/order-stage-processing-icon.png'
+    },
+    {
+        key: 'DELIVERED',
+        title: 'On the way',
+        hint: 'Out for delivery',
+        icon: '/public/images/order-stage-on-the-way-icon.png'
+    },
+    {
+        key: 'DONE',
+        title: 'Done',
+        hint: 'Delivered!',
+        icon: '/public/images/order-stage-done-icon.png'
+    }
 ];
 
 function normalizeOrderStatusKey(statusRaw) {
@@ -2579,9 +2778,9 @@ function buildOrderProgressStagesHtml(statusRaw) {
         const isLast = i === ORDER_PROGRESS_STAGES.length - 1;
         const bulletLabel = allComplete || i < activeIdx ? 'Completed' : i === activeIdx ? 'Current step' : 'Upcoming';
         const showCheck = allComplete || i < activeIdx;
-        const mark = showCheck
-            ? '<span class="order-track-stages__check" aria-hidden="true">✓</span>'
-            : `<span class="order-track-stages__num" aria-hidden="true">${i + 1}</span>`;
+        const badge = showCheck
+            ? '<span class="order-track-stages__badge order-track-stages__badge--done" aria-hidden="true">✓</span>'
+            : `<span class="order-track-stages__badge" aria-hidden="true">${i + 1}</span>`;
         const segBefore = i === 0
             ? '<span class="order-track-stages__seg order-track-stages__seg--gap" aria-hidden="true"></span>'
             : '<span class="order-track-stages__seg order-track-stages__seg--before" aria-hidden="true"></span>';
@@ -2590,9 +2789,13 @@ function buildOrderProgressStagesHtml(statusRaw) {
             : '<span class="order-track-stages__seg order-track-stages__seg--after" aria-hidden="true"></span>';
         return ''
             + `<li class="order-track-stages__item ${stateClass}" style="--st:${i}" role="listitem">`
+            + `<div class="order-track-stages__visual" title="${escapeHtml(bulletLabel)}">`
+            + `<img class="order-track-stages__icon" src="${escapeHtml(st.icon)}" alt="" width="120" height="90" decoding="async">`
+            + badge
+            + '</div>'
             + '<div class="order-track-stages__rail" aria-hidden="true">'
             + segBefore
-            + `<span class="order-track-stages__bullet" title="${escapeHtml(bulletLabel)}">${mark}</span>`
+            + '<span class="order-track-stages__dot"></span>'
             + segAfter
             + '</div>'
             + '<div class="order-track-stages__body">'
@@ -3205,31 +3408,20 @@ function setOrderSubmitLoading(loading, $buttons = null) {
     }
 }
 
-function submitOrderToSpringBoot(items, deliveryDetails = null, context = 'cart', submitOptions = null) {
+function submitOrderToSpringBoot(items, deliveryDetails = null, context = 'cart') {
     const safeItems = Array.isArray(items) ? items : [];
-    const prices = getPriceOverridesFromStorage(context);
-    if (!prices) {
-        return $.Deferred().reject({
-            status: 0,
-            statusText: 'Payment summary not loaded',
-            responseJSON: { message: 'Please view payment summary to load prices before placing your order.' }
-        }).promise();
-    }
-    const opts = submitOptions && typeof submitOptions === 'object' ? submitOptions : {};
     const payload = {
         orderSource: 'website',
         placedAt: new Date().toISOString(),
-        orderPrice: prices.orderPrice,
-        deliveryPrice: prices.deliveryPrice,
         items: safeItems.map((item) => buildOrderItemPayload(item)),
-        deliveryDetails: deliveryDetails || null,
-        replacePendingOrder: Boolean(opts.replacePendingOrder)
+        deliveryDetails: deliveryDetails || null
     };
 
     return $.ajax({
         url: SPRING_BOOT_ORDER_API_URL,
         method: 'POST',
         contentType: 'application/json',
+        accept: 'application/json',
         dataType: 'json',
         data: JSON.stringify(payload)
     });
@@ -3277,32 +3469,6 @@ function checkout() {
     setOrderSubmitLoading(true, $checkoutBtn);
     submitOrderToSpringBoot(cart, deliveryDetails, 'cart')
         .done((response) => {
-            if (response && response.status === ORDER_STATUS_CONFIRM_PENDING) {
-                showPendingOrderReplaceConfirm(
-                    response.message,
-                    response.existingOrderId,
-                    () => {
-                        setOrderSubmitLoading(true, $checkoutBtn);
-                        submitOrderToSpringBoot(cart, deliveryDetails, 'cart', { replacePendingOrder: true })
-                            .done((r2) => {
-                                handleSuccessfulOrderSubmit(r2, { mode: 'cart' });
-                            })
-                            .fail((xhr) => {
-                                handleOrderSubmitFailure(xhr, cart, deliveryDetails, 'cart');
-                            })
-                            .always(() => {
-                                setOrderSubmitLoading(false, $checkoutBtn);
-                                const cartAfter = JSON.parse(localStorage.getItem('cart')) || [];
-                                if (cartAfter.length) {
-                                    refreshCartSummaryState(cartAfter);
-                                } else {
-                                    $('#checkoutBtn').prop('disabled', true);
-                                }
-                            });
-                    }
-                );
-                return;
-            }
             handleSuccessfulOrderSubmit(response, { mode: 'cart' });
         })
         .fail((xhr) => {
@@ -3371,27 +3537,6 @@ function submitBuyNowOrder() {
     setOrderSubmitLoading(true, $submitButton);
     submitOrderToSpringBoot([buyNowItem], deliveryDetails, 'buyNow')
         .done((response) => {
-            if (response && response.status === ORDER_STATUS_CONFIRM_PENDING) {
-                showPendingOrderReplaceConfirm(
-                    response.message,
-                    response.existingOrderId,
-                    () => {
-                        setOrderSubmitLoading(true, $submitButton);
-                        submitOrderToSpringBoot([buyNowItem], deliveryDetails, 'buyNow', { replacePendingOrder: true })
-                            .done((r2) => {
-                                handleSuccessfulOrderSubmit(r2, { mode: 'buyNow' });
-                            })
-                            .fail((xhr) => {
-                                handleOrderSubmitFailure(xhr, [buyNowItem], deliveryDetails, 'buyNow');
-                            })
-                            .always(() => {
-                                setOrderSubmitLoading(false, $submitButton);
-                                updateBuyNowSubmitButtonState();
-                            });
-                    }
-                );
-                return;
-            }
             handleSuccessfulOrderSubmit(response, { mode: 'buyNow' });
         })
         .fail((xhr) => {

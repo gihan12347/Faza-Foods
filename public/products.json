@@ -234,6 +234,7 @@
       "price": 1850,
       "name": "Hair Oil",
       "isBestSeller": false,
+      "isDeliveryFree": true,
       "originalPrice": 1850,
       "images": [
         "/public/images/oil.jpeg"
@@ -776,6 +777,29 @@
       "howToUse": "Serve with rice or rotti",
       "description": "Traditional homemade lime pickle.",
       "category": "Special Homemade Items"
+    },
+    {
+      "ingredients": [
+        "Sandalwood"
+      ],
+      "useFor": [
+        "Hair care",
+        "Daily grooming"
+      ],
+      "price": 1600,
+      "name": "Premium Sandalwood Comb",
+      "isBestSeller": true,
+      "isDeliveryFree": true,
+      "originalPrice": 1600,
+      "images": [
+        "/public/images/hero-sandalwood-comb-banner.png"
+      ],
+      "weight": "1 pc",
+      "id": 32,
+      "image": "/public/images/hero-sandalwood-comb-banner.png",
+      "howToUse": "Use gently through damp or dry hair",
+      "description": "Premium sandalwood comb for everyday hair care.",
+      "category": "Cosmetics Products"
     }
   ]
 }

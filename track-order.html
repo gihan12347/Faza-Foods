@@ -7,7 +7,7 @@
     <title>Track order — Fasa Products</title>
     <link rel="icon" type="image/jpeg" href="/public/images/fasa-logo.jpeg">
     <link rel="apple-touch-icon" href="/public/images/fasa-logo.jpeg">
-    <link rel="stylesheet" href="styles.css?v=10">
+    <link rel="stylesheet" href="styles.css?v=24">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -29,18 +29,31 @@
     <div id="header"></div>
 
     <main class="order-track-main">
-        <section class="section order-track-section" aria-labelledby="order-track-title">
-            <div class="container">
-                <div class="section-header">
-                    <h1 class="section-title" id="order-track-title">Track your order</h1>
-                    <p class="section-subtitle">Enter the order token from your checkout confirmation screen. If you opened a tracking link from your confirmation, your token is filled in automatically.</p>
-                </div>
-
+        <section class="section order-track-section" aria-label="Look up your order">
+            <div class="container order-track-lookup">
                 <div class="order-track-panel">
+                    <img
+                        src="/public/images/order-status-guide.png"
+                        alt="Your order status: 1 Pending — Order Received; 2 Processing — In Warehouse; 3 On the Way — Out for Delivery; 4 Done — Delivered"
+                        class="order-track-panel__guide"
+                        width="1200"
+                        height="520"
+                        decoding="async"
+                    >
+                    <p class="order-track-panel__instruction">Paste the order token from your confirmation, then tap <strong>Track live status</strong> to search.</p>
                     <form id="orderTrackForm" class="order-track-form" autocomplete="on">
                         <label class="order-track-form__label" for="orderTrackTokenInput">Order token</label>
                         <input type="text" id="orderTrackTokenInput" name="orderToken" class="order-track-form__input" placeholder="Paste your order token" maxlength="120" autocomplete="one-time-code">
-                        <button type="submit" class="btn btn-primary order-track-form__submit">Check status</button>
+                        <button type="submit" class="order-track-form__submit" aria-label="Track live status">
+                            <img
+                                src="/public/images/track-live-status-btn.png"
+                                alt=""
+                                class="order-track-form__submit-img"
+                                width="640"
+                                height="160"
+                                decoding="async"
+                            >
+                        </button>
                     </form>
 
                     <div id="orderTrackResult" class="order-track-result" aria-live="polite"></div>
@@ -69,7 +82,7 @@
                     <ul>
                         <li><a href="/">Home</a></li>
                         <li><a href="#products">Products</a></li>
-                        <li><a href="#best-sellers">Best Sellers</a></li>
+                        <li><a href="/#free-delivery">Free Delivery</a></li>
                         <li><a href="#offers">Offers</a></li>
                         <li><a href="/track-order">Track order</a></li>
                     </ul>
@@ -124,7 +137,7 @@
     </footer>
 
     <script src="jquery.js"></script>
-    <script src="include.js?v=10"></script>
+    <script src="include.js?v=20"></script>
     <script>
         document.getElementById('year').textContent = new Date().getFullYear();
     </script>
@@ -161,6 +174,6 @@
             }
         })();
     </script>
-    <script type="module" src="script.js?v=10"></script>
+    <script type="module" src="script.js?v=21"></script>
 </body>
 </html>

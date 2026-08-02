@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Browse our amazing collection of products. Find best sellers, special offers, and discover your perfect match.">
+    <meta name="description" content="Browse our amazing collection of products. Find free delivery deals, special offers, and discover your perfect match.">
     <title>Fasa Products - Your Product Catalog</title>
     <link rel="icon" type="image/jpeg" href="/public/images/fasa-logo.jpeg">
     <link rel="apple-touch-icon" href="/public/images/fasa-logo.jpeg">
-    <link rel="stylesheet" href="styles.css?v=10">
+    <link rel="stylesheet" href="styles.css?v=47">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -23,20 +23,58 @@
             <div class="hero-content">
                 <h1 class="hero-title">Discover Amazing Products</h1>
                 <p class="hero-subtitle">Explore our curated collection of premium products</p>
-                <a href="#products" class="btn btn-primary">Shop Now</a>
+                <a href="#products" class="hero-shop-btn" aria-label="Shop now">
+                    <span class="hero-shop-btn__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="9" cy="20" r="1.35" fill="currentColor"/>
+                            <circle cx="17" cy="20" r="1.35" fill="currentColor"/>
+                            <path d="M3.5 4.5h2.1l1.2 9.4c.12.95.93 1.65 1.89 1.65h8.55c.9 0 1.68-.63 1.88-1.5l1.35-5.85H7.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                    <span class="hero-shop-btn__label">SHOP NOW</span>
+                </a>
             </div>
         </div>
     </section>
 
-    <!-- Best Sellers Section -->
-    <section class="section best-sellers" id="best-sellers">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Best Sellers</h2>
-                <p class="section-subtitle">Our most popular products</p>
+    <!-- Free Delivery Section -->
+    <section class="section free-delivery" id="free-delivery">
+        <div class="free-delivery__promo">
+            <div class="container free-delivery__promo-inner">
+                <div class="free-delivery__copy">
+                    <p class="free-delivery__eyebrow">Special offer</p>
+                    <h2 class="free-delivery__title">Free Delivery</h2>
+                    <p class="free-delivery__text">
+                        Enjoy complimentary delivery on selected Fasa favourites — order Hair Oil, Sandalwood Comb, and more with no delivery fee.
+                    </p>
+                    <a href="#free-delivery-products" class="free-delivery__cta">
+                        <span class="free-delivery__cta-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M3 7h11v10H3V7Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                                <path d="M14 10h4.2l2.3 3.2V17H14v-7Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                                <circle cx="7" cy="18.5" r="1.5" fill="currentColor"/>
+                                <circle cx="17.5" cy="18.5" r="1.5" fill="currentColor"/>
+                            </svg>
+                        </span>
+                        View free-delivery products
+                    </a>
+                </div>
+                <div class="free-delivery__visual">
+                    <img
+                        src="/public/images/hero-free-delivery-banner.png"
+                        alt="Fasa Hair Oil and Sandalwood Comb with free delivery"
+                        loading="lazy"
+                    >
+                </div>
             </div>
-            <div class="products-grid" id="bestSellersGrid">
-                <!-- Products will be dynamically loaded here -->
+        </div>
+        <div class="container" id="free-delivery-products">
+            <div class="section-header free-delivery__products-header">
+                <h3 class="section-title">Free Delivery Products</h3>
+                <p class="section-subtitle">No delivery charge on these items</p>
+            </div>
+            <div class="products-grid" id="freeDeliveryGrid">
+                <!-- Free-delivery products loaded dynamically -->
             </div>
         </div>
     </section>
@@ -262,7 +300,7 @@
                     <ul>
                         <li><a href="/">Home</a></li>
                         <li><a href="#products">Products</a></li>
-                        <li><a href="#best-sellers">Best Sellers</a></li>
+                        <li><a href="#free-delivery">Free Delivery</a></li>
                         <li><a href="#offers">Offers</a></li>
                         <li><a href="/track-order">Track order</a></li>
                     </ul>
@@ -325,7 +363,7 @@
             setActiveNavById('nav-home');
         });
     </script>
-    <script type="module" src="script.js?v=10"></script>
+    <script type="module" src="script.js?v=35"></script>
     <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
     <script>
     if (window.netlifyIdentity) {
