@@ -5840,13 +5840,42 @@ button[type="submit"] {
 
 body.track-order-page {
   background-color: var(--page-bg);
+  min-height: 0;
 }
 
 .track-order-page .order-track-main {
   padding-top: 1rem;
-  padding-bottom: 3rem;
-  min-height: calc(100vh - 8rem);
+  padding-bottom: 0.75rem;
+  min-height: 0 !important;
+  height: auto !important;
+  flex: 0 0 auto;
   background: transparent;
+}
+
+/* Optional stretch only on wide desktops */
+@media (min-width: 1200px) {
+  .track-order-page .order-track-main {
+    min-height: calc(100vh - 8rem) !important;
+    padding-bottom: 3rem;
+  }
+}
+
+@media (max-width: 1199px) {
+  .track-order-page .order-track-main {
+    min-height: 0 !important;
+    height: auto !important;
+    padding-bottom: 0.75rem !important;
+  }
+
+  .track-order-page .footer {
+    margin-top: 0 !important;
+  }
+}
+
+.track-order-page .order-track-section {
+  padding: 0 !important;
+  margin: 0 !important;
+  min-height: 0 !important;
 }
 
 .order-track-section {
@@ -6439,7 +6468,10 @@ body.track-order-page {
 
 @media (max-width: 480px) {
   .track-order-page .order-track-main {
-    padding-top: 0.65rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.75rem;
+    min-height: 0;
+    height: auto;
   }
 
   .order-track-lookup {
